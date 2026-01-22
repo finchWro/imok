@@ -1,0 +1,11 @@
+active: true
+derived: false
+header: |
+  Overview
+level: 1.0
+links: []
+normative: true
+ref: ''
+reviewed: uToxv8IgkJYvWxK2Ki7ucJn0kjzEP-10QCrJcytIh3s=
+text: |
+  IMOK (I'm OK) is a simple system for two way communication using IoT devices. It consists of two application. The first application (Remote client) is connected to IoT device and is responsible for sending and receiving messages. The second application (Communicator) is used to send and receive messages from the first application via IoT. The communication is done using SORACOM API.

@@ -1,0 +1,15 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Remote Client Application programming language
+level: 3.0
+links:
+- REQ002: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  Remote Client Application shall be written in Python using the Tkinter library for the GUI. It will run on Windows and Linux operating systems.

@@ -1,0 +1,20 @@
+active: true
+derived: false
+header: |
+  Communicator Application GUI Layout
+level: 2.0
+links:
+- REQ008: null
+- REQ009: null
+- REQ010: null
+- REQ011: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  ## Communicator Application GUI Layout
+
+  | REQ008 - Connection Status |  |
+  | --- | --- |
+  | REQ009 - Send Messages | REQ010 - Receive Messages |
+  | REQ011 - Message Log |  |

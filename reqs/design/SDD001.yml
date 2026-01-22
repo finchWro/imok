@@ -1,0 +1,20 @@
+active: true
+derived: false
+header: |
+  Remote Client Application GUI Layout
+level: 1.0
+links:
+- REQ004: null
+- REQ005: null
+- REQ006: null
+- REQ007: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  ## Remote Client Application GUI Layout
+
+  | REQ004 - Connection Status |
+  | --- |
+  | Chat Area ( Send REQ005 and received messages REQ006 ) |
+  | REQ007 - Message Log |

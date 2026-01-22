@@ -1,0 +1,13 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Remote Client Application functions
+level: 7
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: ''

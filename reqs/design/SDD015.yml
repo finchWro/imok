@@ -1,0 +1,28 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Signal Quality Monitoring Design
+level: 7.5
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall monitor RSRP (Reference Signal Received Power) using AT%CESQ=1 command to subscribe to notifications of changes in signal quality.
+  - Notification format is: %CESQ: <rsrp>,<rsrq>,<snr>,<rscp> where:
+  <rsrp>
+    Integer. Reported RSRP value.
+    0 - When measured RSRP < -140 dBm
+    1 - When -140 dBm ≤ measured RSRP < -139 dBm
+    2 - When -139 dBm ≤ measured RSRP < -138 dBm
+    ...
+    95 - When -46 dBm ≤ measured RSRP < -45 dBm
+    96 - When -45 dBm ≤ measured RSRP < -44 dBm
+    97 - When -44 dBm ≤ measured RSRP
+    255 - Not known or not detectable
+    The lower dB boundary of this range can be determined using the reported RSRP value and the following formula: reported RSRP value-141=dBm. For example, 95-141=-46 dBm. Thus, the range is -46 dBm ≤ measured RSRP < -45 dBm.
+
+  - RSRP shall by displayed on the Remote Client Application GUI for user awareness.

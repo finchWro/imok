@@ -1,0 +1,11 @@
+settings:
+  digits: 3
+  itemformat: yaml
+  parent: REQ
+  prefix: SDD
+  sep: ''
+attributes:
+  defaults:
+    doc:
+      name: 'Software Design Document'
+      title: 'Software Design Document for _IMOK_'

@@ -1,0 +1,9 @@
+settings:
+  digits: 3
+  prefix: REQ
+  sep: ''
+attributes:
+  defaults:
+    doc:
+      name: 'Requirements'
+      title: 'Requirements for _IMOK_'

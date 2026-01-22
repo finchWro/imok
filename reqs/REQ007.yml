@@ -1,0 +1,14 @@
+active: true
+derived: false
+doc:
+  name: Requirements
+  title: Requirements for _IMOK_
+header: |
+  Remote Client Application — Message Log
+level: 2.4
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall display a log of sent and received messages via serial console including timestamps for each entry.

@@ -1,0 +1,16 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Send Messages Design
+level: 1.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall implement the message sending functionality as follows:
+  - The application shall provide a user interface element (e.g., a text input field and a send button) for users to compose messages below chat area.
+  - Sent messages shall be displayed in the chat Area with a timestamp indicating when the message was sent.

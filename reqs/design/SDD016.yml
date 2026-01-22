@@ -1,0 +1,20 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  IoT device configuration sequence
+level: 7.1
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall implement a configuration sequence for the IoT device upon startup. This sequence includes:
+
+  - Connect to IoT Device Design SDD007
+  - Establish Cellular Connection Design SDD013
+  - If Establish Cellular Connection SDD013 finishes successfully, then start Signal Quality Monitoring Design SDD015
+  - If Establish Cellular Connection SDD013finishes successfully, then Activate PDP Context Design SDD014
+  - If Activate PDP Context Design SDD014 finishes successfully, then Open UDP socket connection to Soracom Harvest Data Design SDD018

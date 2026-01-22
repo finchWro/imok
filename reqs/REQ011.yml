@@ -1,0 +1,14 @@
+active: true
+derived: false
+doc:
+  name: Requirements
+  title: Requirements for _IMOK_
+header: |
+  Communicator Application — Message Log
+level: 3.4
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Communicator Application shall display a log of sent and received messages including timestamps for each entry.

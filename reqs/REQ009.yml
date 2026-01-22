@@ -1,0 +1,14 @@
+active: true
+derived: false
+doc:
+  name: Requirements
+  title: Requirements for _IMOK_
+header: |
+  Communicator Application — Send Messages
+level: 3.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Communicator Application shall allow users to compose and send messages to the Remote Client Application.

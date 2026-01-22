@@ -1,0 +1,17 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  PDP Context Configuration Design
+level: 7.4
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall configure PDP context for data communication with the cellular network as follows:
+
+  - The application shall send the AT command AT+CGDCONT=1,"IP","soracom.io" to the modem to configure the PDP context (e.g., SORACOM APN settings).
+

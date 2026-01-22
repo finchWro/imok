@@ -1,0 +1,21 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Message Log Design
+level: 1.4
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall implement the message log functionality as follows:
+
+  - The message log shall record all sent messages via the serial console.
+  - The message log shall record all received messages via the serial console.
+  - Each log entry shall include a timestamp indicating when the message was sent or received.
+  - The message log shall be accessible through a dedicated section in the GUI, allowing users to view past messages.
+  - The log shall support filtering options to display only sent messages, only received messages, or all messages.
+  - Users shall have the ability to clear the message log through a button in the GUI, with a confirmation prompt to prevent accidental deletion.

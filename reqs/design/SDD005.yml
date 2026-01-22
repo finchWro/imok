@@ -1,0 +1,15 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Supported IoT Device
+level: 5
+links:
+- REQ003: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  Remote Client Application shall support IoT device Thingy:91 X from Nordic Semiconductor with AT shell firmware.

@@ -1,0 +1,15 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Communicator Application programming language
+level: 4
+links:
+- REQ003: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  Communicator Application shall be written in Python using the Tkinter library for the GUI. It will run on Windows and Linux operating systems.
