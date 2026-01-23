@@ -697,25 +697,88 @@ class RemoteClientApplication:
         self.log_message("sys", msg)
     
     def send_message(self):
-        """Send message (REQ005). Updated for unified chat area."""
+        """Send message from GUI input (REQ005, SDD019).
+        
+        Per SDD019: After message is received from GUI message input, send to Soracom Harvest Data
+        using AT command #XSENDTO=<url>,<port>[,<data>].
+        """
         if not self.is_connected:
             messagebox.showwarning("Not Connected", "Connect first")
             return
         
         msg = self.command_input.get("1.0", "end").strip()
         if not msg:
-            messagebox.showwarning("Empty", "Enter a command")
+            messagebox.showwarning("Empty", "Enter a message")
             return
         
-        success, status = self.serial.send_command(msg)
-        if success:
-            self.display_chat_message("sent", f"[SENT] {msg}")
-            self.log_message("sent", f"[SENT] {msg}")
-        else:
-            self.display_chat_message("sys", f"Send error: {status}")
-            self.log_message("sys", f"Send error: {status}")
+        # Send to Soracom Harvest Data per SDD019
+        self.send_to_harvest_data(msg)
         
         self.command_input.delete("1.0", "end")
+    
+    def send_to_harvest_data(self, data):
+        """Send message to Soracom Harvest Data (SDD019).
+        
+        Per SDD019: Send AT command AT#XSENDTO=<url>,<port>[,<data>] where:
+        - url = "harvest.soracom.io" (quoted)
+        - port = 8514
+        - data = message payload (quoted)
+        - Response: #XSENDTO: <size> (number of bytes sent)
+        """
+        if not self.is_connected:
+            self.log_message("sys", "[ERROR] Not connected - cannot send to Harvest Data")
+            return False
+        
+        if not data:
+            self.log_message("sys", "[ERROR] Empty message - cannot send to Harvest Data")
+            return False
+        
+        # Format message for Harvest Data per SDD019 example
+        harvest_endpoint = "harvest.soracom.io"
+        harvest_port = 8514
+        
+        # Send via AT#XSENDTO command with quoted parameters (SDD019)
+        cmd = f'AT#XSENDTO="{harvest_endpoint}",{harvest_port},"{data}"'
+        
+        self.log_message("sent", f"[SEND] {cmd}")
+        success, response = self.serial.send_command(cmd)
+        
+        if success:
+            if response:
+                self.log_message("recv", f"[RECV] {response}")
+            
+            # Parse response format: #XSENDTO: <size> per SDD019
+            # Note: Response may come as URC or in command response
+            try:
+                if "#XSENDTO:" in str(response):
+                    size_str = str(response).split("#XSENDTO:")[1].strip()
+                    size = int(size_str.split()[0])
+                    self.log_message("sys", f"[SUCCESS] Sent {size} bytes to Soracom Harvest Data (SDD019)")
+                    self.display_chat_message("sent", f"[HARVEST] {data}")
+                    return True
+                else:
+                    # If response is just OK, the #XSENDTO response may arrive as URC
+                    # Wait briefly for URC response
+                    import time
+                    time.sleep(0.5)
+                    if "#XSENDTO:" in str(response):
+                        size_str = str(response).split("#XSENDTO:")[1].strip()
+                        size = int(size_str.split()[0])
+                        self.log_message("sys", f"[SUCCESS] Sent {size} bytes to Soracom Harvest Data (SDD019)")
+                        self.display_chat_message("sent", f"[HARVEST] {data}")
+                        return True
+                    else:
+                        self.log_message("sys", f"[WARNING] AT#XSENDTO sent but #XSENDTO response not received")
+                        self.display_chat_message("sys", f"[HARVEST PENDING] {data}")
+                        return False
+            except (ValueError, IndexError):
+                self.log_message("sys", f"[WARNING] Failed to parse #XSENDTO response: {response}")
+                self.display_chat_message("sys", f"[HARVEST PENDING] {data}")
+                return False
+        else:
+            self.log_message("sys", f"[FAILURE] AT#XSENDTO command failed: {response}")
+            self.display_chat_message("sys", f"[HARVEST ERROR] {data}")
+            return False
     
     def log_message(self, tag, msg):
         """Log message with timestamp (REQ007, SDD012)."""
@@ -774,7 +837,8 @@ class RemoteClientApplication:
     def poll_serial(self):
         """Poll for unsolicited events (URCs) only (REQ006, SDD011, SDD013).
         Command responses are handled inside send_command to comply with SDD017.
-        Displays received messages in unified chat area (SDD001).
+        Displays received messages in unified chat area (SDD001, SDD011).
+        Per SDD011: Chat must NOT display AT command responses or URCs from the modem.
         """
         if self.is_connected:
             while True:
@@ -783,11 +847,14 @@ class RemoteClientApplication:
                 except queue.Empty:
                     break
                 
-                # Display in chat area (SDD001)
-                self.display_chat_message("recv", f"[RECV] {msg}")
+                # Per SDD011: Only display actual messages, not modem responses or URCs
+                # URCs (starting with +, %, #) are handled separately, not displayed in chat
+                # The chat area is reserved for messages from Communicator Application only
                 
-                # Log URCs (unsolicited result codes) from modem (SDD013)
+                # Log all received data for debugging (SDD012)
                 self.log_message("recv", f"[RECV] {msg}")
+                
+                # Handle URCs separately (SDD013, SDD015, etc) without displaying in chat
                 self.handle_urc(msg)
         
         self.root.after(100, self.poll_serial)
