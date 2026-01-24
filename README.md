@@ -1,8 +1,10 @@
 # IMOK - IoT Communication System
 
-A bi-directional communication system enabling message exchange between a Remote Client Application (connected to Nordic Thingy:91 X IoT device) and a Communicator Application (connected to Soracom cloud platform).
+**IMOK** (I'm OK) is a bi-directional communication system that enables message exchange via IoT devices in remote or challenging environments. The system allows users to send "I'm OK" status updates and communicate with remote locations through cellular IoT networks.
 
-## Overview
+**Future Vision:** The IMOK system is designed to evolve with IoT NTN (Non-Terrestrial Network) technology, enabling communication in remote locations covered only by satellite networks. This will extend coverage to areas beyond traditional cellular infrastructure, ensuring connectivity anywhere on Earth.
+
+## Current Implementation
 
 The IMOK system consists of two Python/Tkinter applications that communicate via Soracom's cellular network and Harvest Data API:
 
