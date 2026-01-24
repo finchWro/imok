@@ -26,15 +26,16 @@ The IMOK system consists of two Python/Tkinter applications that communicate via
            │                                   │
            │                                   │
        Serial Port                        HTTPS API
+        (2-way)                             (2-way)
            │                                   │
            ▼                                   ▼
 ┌─────────────────────────┐         ┌──────────────────────────┐
-│  Nordic Thingy:91 X     │◄────────┤  Soracom Platform        │
+│  Nordic Thingy:91 X     │◄───────►│  Soracom Platform        │
 │  IoT Device             │  LTE-M  │  - Harvest Data API      │
-│                         │         │  - Downlink UDP (55555)  │
+│                         │ (2-way) │  - Downlink UDP (55555)  │
 │  - LTE-M Modem          │         │  - SIM Management        │
-│  - AT Commands          │         │                          │
-│  - UDP Socket           │         │                          │
+│  - AT Commands          │  Uplink: Harvest Data              │
+│  - UDP Socket           │  Downlink: UDP (port 55555)        │
 └─────────────────────────┘         └──────────────────────────┘
 ```
 
