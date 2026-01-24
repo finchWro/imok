@@ -4,10 +4,11 @@ doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
 header: |
-  Remote Client Application functions
-level: 9
+  UDP buffer size
+level: 8
 links: []
 normative: true
 ref: ''
 reviewed: null
-text: ''
+text: |
+  UDP buffer size is 256.

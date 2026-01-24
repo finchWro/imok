@@ -1,0 +1,21 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  List SIMSs Associated with the User Account
+level: 10.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Client Application shall provide functionality to list all SIMSs associated with the authenticated user account. This feature enables users to view and manage their SIM inventory effectively.
+
+  The following steps outline the process for listing SIMSs:
+  1) Client Application shall send a request to the Soracom API to retrieve the list of SIMSs associated with the authenticated user account.
+  2) Soracom API shall process the request and return a response containing the details of all SIMSs, including simid, IMSI and session status (true:online/false:offline).
+  3) Client Application shall parse the response and display the list of SIMSs in the GUI, allowing users to view their SIM inventory.
+  4) Client Application shall display only simid (simid), IMSI(sessionStatus->imsi), and session online status (online/offline) (sessionStatus->online) information for each SIM in the list.
+  5) Client Application shall store the retrieved SIM information locally for further operations, such as selecting a SIM for data transmission.

@@ -206,6 +206,11 @@ class RemoteClientApplication:
         self.signal_quality = {"rssi": 0, "rsrp": 0}
         self.rssi_threshold = -110  # dBm threshold for acceptable signal
         self.rsrp_threshold = -130  # dBm threshold for acceptable signal
+
+        # UDP receive configuration (SDD026, SDD027, SDD028)
+        self.udp_port = 55555
+        self.udp_buffer_size = 256
+        self.udp_bound = False
         
         # Variables
         self.selected_port = tk.StringVar()
@@ -504,6 +509,9 @@ class RemoteClientApplication:
             
             # Open UDP socket connection to Soracom Harvest Data (SDD018) - conditional on SDD013 success (SDD016)
             self.open_socket_connection()
+
+            # Bind UDP port for communicator downlink (SDD026/SDD027)
+            self.bind_udp_port()
         else:
             self.log_message("sys", "Skipping SDD014, SDD015, and SDD018 due to SDD013 failure")
     
@@ -568,6 +576,13 @@ class RemoteClientApplication:
         elif message.startswith("+CSCON"):
             # Connection state notification per SDD013
             self.log_message("sys", f"[URC] Connection state: {message}")
+            try:
+                state = int(message.split(":")[1].strip().split(",")[0])
+                if state == 1:
+                    # Modem indicates connected; attempt to receive pending UDP data (SDD027)
+                    threading.Thread(target=self.receive_udp_message, daemon=True).start()
+            except Exception:
+                pass
         elif message.startswith("%CESQ"):
             # Handle RSRP notification (SDD015)
             self.log_message("sys", f"[URC] Signal quality: {message}")
@@ -673,6 +688,128 @@ class RemoteClientApplication:
                 self.log_message("sys", "[SUCCESS] UDP socket creation command sent")
         else:
             self.log_message("sys", f"[ERROR] Failed to open UDP socket: {response}")
+
+    def bind_udp_port(self):
+        """Bind UDP port for communicator downlink (SDD026/SDD027)."""
+        if not self.is_connected:
+            self.log_message("sys", "[ERROR] Cannot bind UDP port - not connected")
+            return False
+
+        cmd = f"AT#XBIND={self.udp_port}"
+        self.log_message("sys", f"Binding UDP port {self.udp_port} for downlink (SDD026/SDD027)...")
+        self.log_message("sent", f"[SEND] {cmd}")
+        success, response = self.serial.send_command(cmd)
+        if success:
+            if response:
+                self.log_message("recv", f"[RECV] {response}")
+            self.log_message("sys", f"[SUCCESS] UDP port {self.udp_port} bound for receive (SDD027)")
+            self.udp_bound = True
+            return True
+        else:
+            self.log_message("sys", f"[ERROR] Failed to bind UDP port {self.udp_port}: {response}")
+            self.udp_bound = False
+            return False
+
+    def receive_udp_message(self):
+        """Receive UDP message via AT#XRECVFROM with configured buffer (SDD027/SDD028).
+        
+        Per SDD027 step 5, response format:
+        #XRECVFROM: <size>,<ip_addr>,<port>
+        <data>
+        OK
+        
+        Per SDD027 step 6: Display messages only from ip_addr="100.127.10.16"
+        """
+        if not (self.is_connected and self.udp_bound):
+            self.log_message("sys", "[INFO] Skipping UDP receive - not connected or not bound")
+            return
+
+        cmd = f"AT#XRECVFROM={self.udp_buffer_size}"
+        self.log_message("sent", f"[SEND] {cmd}")
+        success, response = self.serial.send_command(cmd, timeout=5.0)
+
+        if not success:
+            self.log_message("sys", f"[ERROR] UDP receive failed: {response}")
+            return
+
+        if response:
+            self.log_message("recv", f"[RECV] {response}")
+
+        # Extract payload from multi-line response per SDD027 step 5
+        # Format: #XRECVFROM: <size>,<ip_addr>,<port> followed by <data> on next line(s)
+        payload = None
+        size = None
+        ip_addr = None
+        port = None
+        if response and "#XRECVFROM:" in str(response):
+            try:
+                response_str = str(response)
+                # Split response into lines
+                lines = response_str.split(" | ")  # Responses joined with " | " per send_command
+                payload_lines = []
+                found_header = False
+                
+                for line in lines:
+                    line = line.strip()
+                    if "#XRECVFROM:" in line:
+                        found_header = True
+                        # Parse header values: <size>,<ip_addr>,<port>
+                        # Format per SDD027: #XRECVFROM:<size>,"<ip_addr>",<port>
+                        try:
+                            header = line.split(":", 1)[1].strip()
+                            parts = [p.strip() for p in header.split(",")]
+                            if len(parts) >= 3:
+                                try:
+                                    size = int(parts[0])
+                                except Exception:
+                                    size = None
+                                # Remove quotes from ip_addr if present
+                                ip_addr = parts[1].strip('"').strip("'").strip()
+                                try:
+                                    port = int(parts[2])
+                                except Exception:
+                                    port = None
+                        except Exception:
+                            pass
+                        continue
+                    # After header, capture all non-OK/ERROR lines as payload
+                    if found_header and line and not line.startswith("OK") and not line.startswith("ERROR"):
+                        payload_lines.append(line)
+                
+                if payload_lines:
+                    payload = " ".join(payload_lines)
+                
+                # Fallback: try to extract from single line if no multi-line match
+                if not payload and '"' in response_str:
+                    after_token = response_str.split("#XRECVFROM:", 1)[1]
+                    if '"' in after_token:
+                        parts = after_token.split('"')
+                        if len(parts) >= 2:
+                            payload = parts[1]
+            except Exception as e:
+                self.log_message("sys", f"[DEBUG] Error parsing UDP response: {e}")
+                payload = None
+
+        # Per SDD027 step 6: Only display messages from 100.127.10.16 (Soracom Communicator)
+        if payload:
+            allowed_ip = "100.127.10.16"
+            if ip_addr and ip_addr.strip() == allowed_ip:
+                # Log details (size/ip/port) when available
+                details = []
+                if size is not None:
+                    details.append(f"size={size}")
+                if ip_addr is not None:
+                    details.append(f"ip={ip_addr}")
+                if port is not None:
+                    details.append(f"port={port}")
+                suffix = f" ({', '.join(details)})" if details else ""
+                self.log_message("recv", f"[RECV]{suffix} {payload}")
+                self.display_chat_message("recv", f"[RECV] {payload}")
+            else:
+                # Log but do not display messages from other IPs (SDD027 step 6)
+                self.log_message("sys", f"[INFO] Ignoring UDP message from unauthorized IP: {ip_addr} (expected {allowed_ip})")
+        else:
+            self.log_message("sys", f"[INFO] UDP receive completed but no payload parsed: {response}")
     
     def update_signal_quality_display(self):
         """Update GUI signal quality display (SDD015 - RSRP only)."""
@@ -689,6 +826,7 @@ class RemoteClientApplication:
         self.connection_state = "disconnected"
         self.urc_monitoring_active = False
         self.network_registered = False
+        self.udp_bound = False
         self.status_label.config(text="Status: Disconnected")
         self.update_status()
         self.connect_btn.config(state='normal')
@@ -754,7 +892,7 @@ class RemoteClientApplication:
                     size_str = str(response).split("#XSENDTO:")[1].strip()
                     size = int(size_str.split()[0])
                     self.log_message("sys", f"[SUCCESS] Sent {size} bytes to Soracom Harvest Data (SDD019)")
-                    self.display_chat_message("sent", f"[HARVEST] {data}")
+                    self.display_chat_message("sent", f"[SEND] {data}")
                     return True
                 else:
                     # If response is just OK, the #XSENDTO response may arrive as URC
@@ -765,11 +903,11 @@ class RemoteClientApplication:
                         size_str = str(response).split("#XSENDTO:")[1].strip()
                         size = int(size_str.split()[0])
                         self.log_message("sys", f"[SUCCESS] Sent {size} bytes to Soracom Harvest Data (SDD019)")
-                        self.display_chat_message("sent", f"[HARVEST] {data}")
+                        self.display_chat_message("sent", f"[SEND] {data}")
                         return True
                     else:
                         self.log_message("sys", f"[WARNING] AT#XSENDTO sent but #XSENDTO response not received")
-                        self.display_chat_message("sys", f"[HARVEST PENDING] {data}")
+                        self.display_chat_message("sys", f"[SEND PENDING] {data}")
                         return False
             except (ValueError, IndexError):
                 self.log_message("sys", f"[WARNING] Failed to parse #XSENDTO response: {response}")

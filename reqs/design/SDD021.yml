@@ -1,0 +1,21 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Generating an SORACOM API Key and Token with an ID and Password
+level: 10.4
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  To access the Soracom API, users must authenticate using an API Key and Token. Authentication method shall be used with ID and Password, which allows Root users and SAM users to obtain credentials for API access.
+
+  The following steps outline the process for generating an API Key and Token using an ID and Password:
+  1) Client Application shall request user ID and Password through the GUI.
+  2) Client Application shall send the user ID and Password to the Soracom Authentication Server.
+  3) Soracom Authentication Server shall validate the provided credentials. If the credentials are valid, the server shall generate an API Key and Token.
+  4) Soracom Authentication Server shall return the generated API Key and Token to the Client Application.
+  5) Client Application shall securely store the received API Key and Token for future API requests

@@ -6,7 +6,8 @@ doc:
 header: |
   Remote Client Application — Receive Messages
 level: 1.1
-links: []
+links:
+- SDD027: null
 normative: true
 ref: ''
 reviewed: null

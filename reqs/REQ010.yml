@@ -6,7 +6,8 @@ doc:
 header: |
   Communicator Application — Receive Messages
 level: 3.3
-links: []
+links:
+- SDD029: null
 normative: true
 ref: ''
 reviewed: null

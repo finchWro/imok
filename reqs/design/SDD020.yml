@@ -4,8 +4,8 @@ doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
 header: |
-  Remote Client Application functions
-level: 9
+  Communicator Application Funnctions
+level: 10
 links: []
 normative: true
 ref: ''

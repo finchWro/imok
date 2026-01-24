@@ -14,7 +14,10 @@ reviewed: null
 text: |
   ## Communicator Application GUI Layout
 
-  | REQ008 - Connection Status |  |
-  | --- | --- |
-  | REQ009 - Send Messages | REQ010 - Receive Messages |
-  | REQ011 - Message Log |  |
+  | REQ008 - Connection Status |
+  | --- |
+  | Chat area ( Send REQ009 and received messages REQ010) |
+  | REQ011 - Message Log |
+
+  Note:
+  - Chat area must not display log messages (REQ011).

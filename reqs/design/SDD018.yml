@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Open UDP socket connection to Soracom Harvest Data
-level: 7.6
+level: 9.8
 links: []
 normative: true
 ref: ''
