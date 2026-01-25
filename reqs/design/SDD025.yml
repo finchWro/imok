@@ -20,4 +20,3 @@ text: |
   3) The Communicator Application shall use UDP port defined in SDD026 UDP Transmission for sending data.
   4) The Communicator Application shall handle the response from the Soracom API, indicating whether the data transmission was successful (code 204) or if there were any errors (dispaly Code and Description).
   5) The Communicator Application shall display send message in chat area with timestamp and status (sent/success/failure).
-

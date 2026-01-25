@@ -8,8 +8,27 @@
 
 The IMOK system consists of two Python/Tkinter applications that communicate via Soracom's cellular network and Harvest Data API:
 
-- **Remote Client Application** - Interfaces with Nordic Thingy:91 X via serial, sends messages to Soracom Harvest Data, and receives UDP downlink messages from the Communicator
+- **Remote Client Application** - Interfaces with IoT devices (Nordic Thingy:91 X, Murata Type 1SC-NTNG) via serial using Device Profile Pattern, sends messages to Soracom Harvest Data, and receives UDP downlink messages from the Communicator
 - **Communicator Application** - Authenticates with Soracom API, manages SIM inventory, sends UDP downlink messages to Remote Client, and polls Harvest Data for received messages
+
+### Supported IoT Devices
+
+The Remote Client Application uses a **Device Profile Pattern** (SDD030) to support multiple IoT device types:
+
+1. **Nordic Thingy:91 X** (Nordic Semiconductor)
+   - Single-command operations: `AT#XSENDTO`, `AT#XRECVFROM`, `AT#XBIND`
+   - ASCII data encoding
+   - Standard AT commands for LTE-M
+   - Default baud rate: 9600
+
+2. **Murata Type 1SC-NTNG** (Murata)
+   - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND → DELETE
+   - HEX data encoding (ASCII to HEX conversion)
+   - Murata-specific AT commands: `AT%SOCKETCMD`, `AT%SOCKETDATA`
+   - Supports LTE-M and NB-IoT-NTN
+   - Default baud rate: 115200
+
+The Device Profile Pattern allows easy addition of new IoT device types by implementing a common interface without modifying core application logic.
 
 ## Architecture
 
@@ -79,8 +98,10 @@ pip install -r requirements.txt
 ## Configuration
 
 ### Remote Client Application
-- Connect Nordic Thingy:91 X via USB/Serial
-- Select COM port and baud rate (default: 9600) in GUI
+- Connect supported IoT device (Nordic Thingy:91 X or Murata Type 1SC-NTNG) via USB/Serial
+- Select device type from dropdown (Device Configuration section)
+- Select COM port and baud rate in GUI
+- Application automatically uses appropriate AT commands for selected device
 - No additional configuration required
 
 ### Communicator Application
@@ -99,20 +120,23 @@ python remote_client.py
 ```
 
 **Features:**
+- **Device Selection**: Choose between Nordic Thingy:91 X and Murata Type 1SC-NTNG
 - **Connection Status**: Green (connected + network registered), Yellow (connecting/offline), Red (disconnected)
 - **Serial Configuration**: Select COM port and baud rate
 - **Signal Quality**: Real-time RSRP display (dBm)
 - **Send Messages**: Input text and click Send to transmit to Soracom Harvest Data
 - **Receive Messages**: Automatically receives UDP downlink from Communicator (port 55555)
-- **Message Log**: Filterable log (All/Sent/Received/System) with timestamps
+- **Message Log**: Filterable log (All/Sent/Received/System) with timestamps and detailed AT command traces
 - **Chat Area**: Displays sent (`[SEND]`) and received (`[RECV]`) messages with timestamps
+- **SDD016 Compliance**: Sequential initialization - waits for network registration before proceeding with UDP socket operations
 
 **Workflow:**
-1. Select COM port and baud rate
-2. Click **Connect** - initiates cellular network registration
-3. Wait for network registration (`+CEREG 1/5`) and PDP context activation
-4. UDP socket opens automatically, port 55555 binds for downlink
-5. Send messages to Harvest Data or receive downlink from Communicator
+1. Select device type (Nordic Thingy:91 X or Murata Type 1SC-NTNG)
+2. Select COM port and appropriate baud rate
+3. Click **Connect** - initiates cellular network registration
+4. Application waits for network registration (`+CEREG 1/5` or `CEREG: 5`) per SDD016 requirements
+5. Only after successful registration: PDP context activation, UDP socket opening, and port binding
+6. Send messages to Harvest Data or receive downlink from Communicator
 
 ### Running the Communicator Application
 

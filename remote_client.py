@@ -10,7 +10,7 @@ Implements Software Requirements Specification (SRS):
 Design specified in Software Design Document (SDD):
 - SDD001: Remote Client Application GUI Layout (Level 1.0)
 - SDD003: Python + Tkinter (Level 3.0)
-- SDD005: Nordic Thingy:91 X Support (Level 5.0)
+- SDD005: Supported IoT Devices (Level 5.0) - Nordic Thingy:91 X and Murata Type 1SC-NTNG
 - SDD006: Connection Status Design (Level 1.1) - Green/Yellow/Red indicators
 - SDD007: Connect to IoT Device via Serial (Level 7.2)
 - SDD009: Remote Client Application functions (Level 7)
@@ -18,11 +18,12 @@ Design specified in Software Design Document (SDD):
 - SDD011: Received Messages Design (Level 1.3)
 - SDD012: Message Log Design (Level 1.4) - Filtering and clear log features
 - SDD013: Establish connection with cellular network (Level 7.3) - AT commands for LTE-M setup
-- SDD014: PDP Context Configuration Design (Level 7.4) - SORACOM APN configuration with AT+CGDCONT? verification
+- SDD014: PDP Context Configuration Design (Level 7.4) - SORACOM APN configuration
 - SDD015: Signal Quality Monitoring Design (Level 7.5) - RSRP monitoring with GUI display
 - SDD016: IoT device configuration sequence (Level 7.1) - Complete startup sequence
 - SDD017: AT commands (Level 6) - Implement timeout, response waiting, and 100ms delay per ITU-T V.250
 - SDD018: Open UDP socket connection to Soracom Harvest Data (Level 7.6)
+- SDD030: Device Profile Pattern Architecture (Level 1.5) - Support multiple IoT device types
 """
 
 import tkinter as tk
@@ -32,6 +33,9 @@ import threading
 import queue
 import serial
 import serial.tools.list_ports
+
+from device_profiles import DeviceProfileFactory
+
 
 
 class SerialManager:
@@ -188,7 +192,7 @@ class SerialManager:
 
 
 class RemoteClientApplication:
-    """Remote Client Application implementing REQ002-REQ007 per SDD001-SDD015."""
+    """Remote Client Application implementing REQ002-REQ007 per SDD001-SDD030."""
     
     def __init__(self, root):
         self.root = root
@@ -201,6 +205,10 @@ class RemoteClientApplication:
         self.connection_state = "disconnected"  # SDD006: disconnected, connecting, connected
         self.urc_monitoring_active = False
         self.network_registered = False  # SDD014: track +CEREG registration (stat 1 or 5)
+        
+        # Device Profile (SDD030) - will be initialized after GUI is built
+        self.device_type = tk.StringVar(value="nordic_thingy91x")  # Default device
+        self.device_profile = None
         
         # Signal Quality Monitoring (SDD015)
         self.signal_quality = {"rssi": 0, "rsrp": 0}
@@ -219,8 +227,22 @@ class RemoteClientApplication:
         # Build GUI per SDD001 (2 columns x 3 rows layout)
         self.build_gui()
         
+        # Initialize device profile after GUI is built (SDD030)
+        self._update_device_profile()
+        
         # Start polling (SDD011, SDD013, SDD015)
         self.poll_serial()
+    
+    def _update_device_profile(self):
+        """Update device profile based on selected device type (SDD030)."""
+        try:
+            self.device_profile = DeviceProfileFactory.create(self.device_type.get())
+            device_info = self.device_profile.get_device_info()
+            self.log_message("sys", f"Device profile: {device_info['name']} by {device_info['manufacturer']}")
+        except ValueError as e:
+            self.log_message("sys", f"[ERROR] {str(e)}")
+            self.device_profile = DeviceProfileFactory.create("nordic_thingy91x")  # Fallback to default
+
     
     def build_gui(self):
         """Build GUI layout per SDD001 - 3 rows: Connection Status | Chat Area | Message Log"""
@@ -243,7 +265,7 @@ class RemoteClientApplication:
         self.build_log_panel(main)
     
     def build_connection_panel(self, parent):
-        """REQ004: Connection Status Display (SDD006, SDD007, SDD015)."""
+        """REQ004: Connection Status Display (SDD006, SDD007, SDD015, SDD030)."""
         frame = ttk.LabelFrame(
             parent, text="Connection Status",
             padding="10"
@@ -270,9 +292,22 @@ class RemoteClientApplication:
         self.rsrp_label = ttk.Label(signal_row, text="-- dBm", font=("Arial", 9, "bold"))
         self.rsrp_label.pack(side=tk.LEFT, padx=2)
         
-        # Configuration
+        # Device Selection (SDD030)
+        device_frame = ttk.LabelFrame(frame, text="Device Configuration", padding="5")
+        device_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=5)
+        device_frame.columnconfigure(1, weight=1)
+        
+        ttk.Label(device_frame, text="Device:").grid(row=0, column=0, sticky='w', padx=5)
+        device_combo = ttk.Combobox(
+            device_frame, textvariable=self.device_type, width=30, state='readonly',
+            values=["nordic_thingy91x", "murata_type1sc_ntng"]
+        )
+        device_combo.grid(row=0, column=1, sticky='ew', padx=5)
+        device_combo.bind("<<ComboboxSelected>>", lambda e: self._update_device_profile())
+        
+        # Serial Configuration
         config_frame = ttk.LabelFrame(frame, text="Serial Configuration", padding="5")
-        config_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=5)
+        config_frame.grid(row=2, column=0, columnspan=2, sticky='ew', pady=5)
         config_frame.columnconfigure(1, weight=1)
         
         ttk.Label(config_frame, text="Port:").grid(row=0, column=0, sticky='w', padx=5)
@@ -289,13 +324,14 @@ class RemoteClientApplication:
         
         # Buttons
         btn_frame = ttk.Frame(frame)
-        btn_frame.grid(row=2, column=0, columnspan=2, sticky='w', pady=10)
+        btn_frame.grid(row=3, column=0, columnspan=2, sticky='w', pady=10, padx=5)
         
         self.connect_btn = ttk.Button(btn_frame, text="Connect", command=self.connect)
         self.connect_btn.pack(side=tk.LEFT, padx=5)
         
         self.disconnect_btn = ttk.Button(btn_frame, text="Disconnect", command=self.disconnect, state='disabled')
         self.disconnect_btn.pack(side=tk.LEFT, padx=5)
+
     
     def build_chat_panel(self, parent):
         """REQ005 + REQ006: Unified Chat Area for sending and receiving messages (SDD001, SDD010, SDD011)."""
@@ -449,71 +485,65 @@ class RemoteClientApplication:
             messagebox.showerror("Connection Error", msg)
     
     def initialize_cellular_network(self):
-        """Initialize cellular network connection per SDD013 with URC handling.
+        """Initialize cellular network connection per SDD016/SDD030.
         
-        Per SDD013: Success is indicated by +CEREG URC with stat=1 (home) or stat=5 (roaming).
-        This method is called from a separate thread to avoid blocking the GUI.
+        Per SDD016 sequence:
+        1. Establish Cellular Connection (SDD013) - send AT commands and wait for +CEREG URC
+        2. If successful, then Signal Quality Monitoring (SDD015)
+        3. If successful, then Activate PDP Context (SDD014)
+        4. If successful, then Open UDP socket (SDD018)
+        5. If successful, then enable Receive Messages (SDD027)
         """
-        self.log_message("sys", "Initializing cellular network (SDD013)...")
+        self.log_message("sys", f"Initializing cellular network (SDD016/SDD030, device: {self.device_type.get()})...")
         
-        # Sequence of AT commands for LTE-M connection (SDD013)
-        cellular_commands = [
-            ("AT+CFUN=0", "Disable modem"),
-            ("AT+CEREG=5", "Subscribe to network status notifications (level-5 per SDD013)"),
-            ("AT+CSCON=1", "Subscribe to result code notifications (level-1 per SDD013)"),
-            ("AT%XSYSTEMMODE=1,0,1,0", "Set system mode to LTE-M"),
-            ("AT+CFUN=1", "Turn on modem"),
-        ]
+        if not self.device_profile:
+            self.log_message("sys", "[ERROR] Device profile not initialized")
+            return False
         
-        initialization_success = True
-        for cmd, description in cellular_commands:
-            success, resp = self.serial.send_command(cmd)
-            if success:
-                self.log_message("sent", f"[SEND] {cmd} - {description}")
-                if resp:
-                    self.log_message("recv", f"[RECV] {resp}")
-            else:
-                self.log_message("sys", f"Error sending {cmd}: {description}")
-                initialization_success = False
+        # Step 1: Send initialization AT commands (SDD013)
+        success = self.device_profile.initialize_network(self.serial)
         
-        # Wait for network registration URC confirmation (SDD013 success criteria)
-        if initialization_success:
-            self.log_message("sys", "Waiting for network registration URC (+CEREG with stat=1/5 per SDD013)...")
-            if self.wait_for_network_registration():
-                self.log_message("sys", "[SUCCESS] Cellular network established - +CEREG 1/5 received (SDD013)")
-                self.monitor_urcs()
-            else:
-                self.log_message("sys", "[ERROR] Network registration timeout - +CEREG 1/5 not received within 30s (SDD013)")
-                initialization_success = False
-        else:
-            self.log_message("sys", "Cellular network initialization failed - some AT commands did not execute successfully (SDD013)")
+        if not success:
+            self.log_message("sys", "[ERROR] Device network initialization failed (SDD013)")
+            return False
+        
+        self.log_message("sys", "[SUCCESS] AT commands sent, waiting for network registration (SDD013)...")
+        
+        # Step 2: Wait for +CEREG URC with stat=1/5 per SDD013
+        self.monitor_urcs()  # Start monitoring URCs
+        
+        if not self.wait_for_network_registration(timeout=30):
+            self.log_message("sys", "[ERROR] Network registration timeout - +CEREG 1/5 not received (SDD013)")
+            return False
+        
+        self.log_message("sys", "[SUCCESS] Cellular connection established - registered on network (SDD013)")
+        
+        # Per SDD016: Only proceed if SDD013 finished successfully
+        # Step 3: Start Signal Quality Monitoring (SDD015)
+        self.monitor_signal_quality()
+        
+        # Step 4: Activate PDP Context (SDD014)
+        self.activate_pdp_context()
+        
+        # Step 5: Open UDP Socket (SDD018)
+        self.open_socket_connection()
+        
+        # Step 6: Bind UDP port for receiving (SDD027)
+        self.bind_udp_port()
+        
+        return True
+
     
     def monitor_urcs(self):
-        """Monitor and handle unsolicited result codes (URCs) from modem (SDD013, SDD016).
+        """Monitor and handle unsolicited result codes (URCs) from modem (SDD013).
         
         Per SDD013: Network registration confirmed by +CEREG URC with stat=1/5.
-        Per SDD016: If Establish Cellular Connection SDD013 finishes successfully,
-        then start Signal Quality Monitoring Design SDD015 and Activate PDP Context Design SDD014.
+        This method just activates URC monitoring - it doesn't execute subsequent steps.
+        Per SDD016, subsequent steps are executed only after network registration succeeds.
         """
         # Initialize URC flag
         self.urc_monitoring_active = True
         self.log_message("sys", "URC monitoring active - listening for +CEREG and other URCs (SDD013)")
-        
-        # SDD016: Only proceed with SDD014 and SDD015 if SDD013 finished successfully
-        if self.urc_monitoring_active:
-            # Activate PDP context for data communication (SDD014) - conditional on SDD013 success (SDD016)
-            self.activate_pdp_context()
-            
-            # Start monitoring signal quality (SDD015) - conditional on SDD013 success (SDD016)
-            self.monitor_signal_quality()
-            
-            # Open UDP socket connection to Soracom Harvest Data (SDD018) - conditional on SDD013 success (SDD016)
-            self.open_socket_connection()
-
-            # Bind UDP port for communicator downlink (SDD026/SDD027)
-            self.bind_udp_port()
-        else:
-            self.log_message("sys", "Skipping SDD014, SDD015, and SDD018 due to SDD013 failure")
     
     def handle_urc(self, message):
         """Handle unsolicited result codes from modem (SDD013, SDD015, SDD018).
@@ -690,126 +720,43 @@ class RemoteClientApplication:
             self.log_message("sys", f"[ERROR] Failed to open UDP socket: {response}")
 
     def bind_udp_port(self):
-        """Bind UDP port for communicator downlink (SDD026/SDD027)."""
+        """Bind UDP port for communicator downlink (SDD026/SDD027/SDD030)."""
         if not self.is_connected:
             self.log_message("sys", "[ERROR] Cannot bind UDP port - not connected")
             return False
 
-        cmd = f"AT#XBIND={self.udp_port}"
-        self.log_message("sys", f"Binding UDP port {self.udp_port} for downlink (SDD026/SDD027)...")
-        self.log_message("sent", f"[SEND] {cmd}")
-        success, response = self.serial.send_command(cmd)
+        self.log_message("sys", f"Binding UDP port {self.udp_port} for downlink (SDD030)...")
+        success = self.device_profile.bind_udp_port(self.serial, self.udp_port)
+        
         if success:
-            if response:
-                self.log_message("recv", f"[RECV] {response}")
-            self.log_message("sys", f"[SUCCESS] UDP port {self.udp_port} bound for receive (SDD027)")
+            self.log_message("sys", f"[SUCCESS] UDP port {self.udp_port} bound for receive (SDD030)")
             self.udp_bound = True
             return True
         else:
-            self.log_message("sys", f"[ERROR] Failed to bind UDP port {self.udp_port}: {response}")
+            self.log_message("sys", f"[ERROR] Failed to bind UDP port {self.udp_port} (SDD030)")
             self.udp_bound = False
             return False
 
     def receive_udp_message(self):
-        """Receive UDP message via AT#XRECVFROM with configured buffer (SDD027/SDD028).
+        """Receive UDP message using device profile (SDD027/SDD028/SDD030).
         
-        Per SDD027 step 5, response format:
-        #XRECVFROM: <size>,<ip_addr>,<port>
-        <data>
-        OK
-        
-        Per SDD027 step 6: Display messages only from ip_addr="100.127.10.16"
+        Device profile handles device-specific reception logic.
+        Returns: (ip_address, port, payload) or None on failure/timeout
         """
         if not (self.is_connected and self.udp_bound):
             self.log_message("sys", "[INFO] Skipping UDP receive - not connected or not bound")
             return
 
-        cmd = f"AT#XRECVFROM={self.udp_buffer_size}"
-        self.log_message("sent", f"[SEND] {cmd}")
-        success, response = self.serial.send_command(cmd, timeout=5.0)
-
-        if not success:
-            self.log_message("sys", f"[ERROR] UDP receive failed: {response}")
-            return
-
-        if response:
-            self.log_message("recv", f"[RECV] {response}")
-
-        # Extract payload from multi-line response per SDD027 step 5
-        # Format: #XRECVFROM: <size>,<ip_addr>,<port> followed by <data> on next line(s)
-        payload = None
-        size = None
-        ip_addr = None
-        port = None
-        if response and "#XRECVFROM:" in str(response):
-            try:
-                response_str = str(response)
-                # Split response into lines
-                lines = response_str.split(" | ")  # Responses joined with " | " per send_command
-                payload_lines = []
-                found_header = False
-                
-                for line in lines:
-                    line = line.strip()
-                    if "#XRECVFROM:" in line:
-                        found_header = True
-                        # Parse header values: <size>,<ip_addr>,<port>
-                        # Format per SDD027: #XRECVFROM:<size>,"<ip_addr>",<port>
-                        try:
-                            header = line.split(":", 1)[1].strip()
-                            parts = [p.strip() for p in header.split(",")]
-                            if len(parts) >= 3:
-                                try:
-                                    size = int(parts[0])
-                                except Exception:
-                                    size = None
-                                # Remove quotes from ip_addr if present
-                                ip_addr = parts[1].strip('"').strip("'").strip()
-                                try:
-                                    port = int(parts[2])
-                                except Exception:
-                                    port = None
-                        except Exception:
-                            pass
-                        continue
-                    # After header, capture all non-OK/ERROR lines as payload
-                    if found_header and line and not line.startswith("OK") and not line.startswith("ERROR"):
-                        payload_lines.append(line)
-                
-                if payload_lines:
-                    payload = " ".join(payload_lines)
-                
-                # Fallback: try to extract from single line if no multi-line match
-                if not payload and '"' in response_str:
-                    after_token = response_str.split("#XRECVFROM:", 1)[1]
-                    if '"' in after_token:
-                        parts = after_token.split('"')
-                        if len(parts) >= 2:
-                            payload = parts[1]
-            except Exception as e:
-                self.log_message("sys", f"[DEBUG] Error parsing UDP response: {e}")
-                payload = None
-
-        # Per SDD027 step 6: Only display messages from 100.127.10.16 (Soracom Communicator)
-        if payload:
-            allowed_ip = "100.127.10.16"
-            if ip_addr and ip_addr.strip() == allowed_ip:
-                # Log details (size/ip/port) when available
-                details = []
-                if size is not None:
-                    details.append(f"size={size}")
-                if ip_addr is not None:
-                    details.append(f"ip={ip_addr}")
-                if port is not None:
-                    details.append(f"port={port}")
-                suffix = f" ({', '.join(details)})" if details else ""
-                self.log_message("recv", f"[RECV]{suffix} {payload}")
-                self.display_chat_message("recv", f"[RECV] {payload}")
-            else:
-                # Log but do not display messages from other IPs (SDD027 step 6)
-                self.log_message("sys", f"[INFO] Ignoring UDP message from unauthorized IP: {ip_addr} (expected {allowed_ip})")
+        # Use device profile to receive (SDD030)
+        result = self.device_profile.receive_udp(self.serial, self.udp_buffer_size)
+        
+        if result:
+            ip_addr, port, payload = result
+            self.log_message("sys", f"[SUCCESS] Received UDP from {ip_addr}:{port} (SDD030)")
+            self.display_chat_message("recv", f"[RECV] {payload}")
         else:
-            self.log_message("sys", f"[INFO] UDP receive completed but no payload parsed: {response}")
+            # No message received - this is normal for polling
+            pass
     
     def update_signal_quality_display(self):
         """Update GUI signal quality display (SDD015 - RSRP only)."""
@@ -855,13 +802,10 @@ class RemoteClientApplication:
         self.command_input.delete("1.0", "end")
     
     def send_to_harvest_data(self, data):
-        """Send message to Soracom Harvest Data (SDD019).
+        """Send message to Soracom Harvest Data (SDD019/SDD030).
         
-        Per SDD019: Send AT command AT#XSENDTO=<url>,<port>[,<data>] where:
-        - url = "harvest.soracom.io" (quoted)
-        - port = 8514
-        - data = message payload (quoted)
-        - Response: #XSENDTO: <size> (number of bytes sent)
+        Uses device profile to handle device-specific send operations.
+        Device profile handles multi-step operations and encoding as needed.
         """
         if not self.is_connected:
             self.log_message("sys", "[ERROR] Not connected - cannot send to Harvest Data")
@@ -871,58 +815,22 @@ class RemoteClientApplication:
             self.log_message("sys", "[ERROR] Empty message - cannot send to Harvest Data")
             return False
         
-        # Format message for Harvest Data per SDD019 example
-        harvest_endpoint = "harvest.soracom.io"
-        harvest_port = 8514
-        
-        # Send via AT#XSENDTO command with quoted parameters (SDD019)
-        cmd = f'AT#XSENDTO="{harvest_endpoint}",{harvest_port},"{data}"'
-        
-        self.log_message("sent", f"[SEND] {cmd}")
-        success, response = self.serial.send_command(cmd)
+        # Use device profile to send (SDD030)
+        success = self.device_profile.send_to_harvest(self.serial, data)
         
         if success:
-            if response:
-                self.log_message("recv", f"[RECV] {response}")
-            
-            # Parse response format: #XSENDTO: <size> per SDD019
-            # Note: Response may come as URC or in command response
-            try:
-                if "#XSENDTO:" in str(response):
-                    size_str = str(response).split("#XSENDTO:")[1].strip()
-                    size = int(size_str.split()[0])
-                    self.log_message("sys", f"[SUCCESS] Sent {size} bytes to Soracom Harvest Data (SDD019)")
-                    self.display_chat_message("sent", f"[SEND] {data}")
-                    return True
-                else:
-                    # If response is just OK, the #XSENDTO response may arrive as URC
-                    # Wait briefly for URC response
-                    import time
-                    time.sleep(0.5)
-                    if "#XSENDTO:" in str(response):
-                        size_str = str(response).split("#XSENDTO:")[1].strip()
-                        size = int(size_str.split()[0])
-                        self.log_message("sys", f"[SUCCESS] Sent {size} bytes to Soracom Harvest Data (SDD019)")
-                        self.display_chat_message("sent", f"[SEND] {data}")
-                        return True
-                    else:
-                        self.log_message("sys", f"[WARNING] AT#XSENDTO sent but #XSENDTO response not received")
-                        self.display_chat_message("sys", f"[SEND PENDING] {data}")
-                        return False
-            except (ValueError, IndexError):
-                self.log_message("sys", f"[WARNING] Failed to parse #XSENDTO response: {response}")
-                self.display_chat_message("sys", f"[HARVEST PENDING] {data}")
-                return False
+            self.log_message("sys", "[SUCCESS] Sent message to Soracom Harvest Data (SDD030)")
+            self.display_chat_message("sent", f"[SEND] {data}")
+            return True
         else:
-            self.log_message("sys", f"[FAILURE] AT#XSENDTO command failed: {response}")
-            self.display_chat_message("sys", f"[HARVEST ERROR] {data}")
+            self.log_message("sys", "[ERROR] Failed to send message to Soracom Harvest Data (SDD030)")
             return False
     
     def log_message(self, tag, msg):
         """Log message with timestamp (REQ007, SDD012)."""
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_entry = f"[{ts}] {msg}"
-        
+
         # Store for filtering (SDD012)
         self.full_log.append((tag, log_entry))
         

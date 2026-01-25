@@ -1,0 +1,18 @@
+device:
+  type: "murata_type1sc_ntng"
+  name: "Murata Type 1SC-NTNG"
+  manufacturer: "Murata"
+  profile_class: "device_profiles.murata_type1sc_ntng.MurataType1SCProfile"
+
+serial:
+  default_baudrate: 115200
+  supported_baudrates: [115200, 460800]
+
+network:
+  udp_port: 55555
+  udp_buffer_size: 256
+  harvest_endpoint: "harvest.soracom.io"
+  harvest_port: 8514
+  ltem_band: "20"
+  ntn_band: "256"
+  ip_filter: "100.127.10.16"

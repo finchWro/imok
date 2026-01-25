@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Remote Client Application — Receive Messages Design
-level: 9.10
+level: 9.1
 links: []
 normative: true
 ref: ''

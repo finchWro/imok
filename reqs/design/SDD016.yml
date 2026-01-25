@@ -16,6 +16,6 @@ text: |
   - Connect to IoT Device Design SDD007
   - Establish Cellular Connection Design SDD013
   - If Establish Cellular Connection SDD013 finishes successfully, then start Signal Quality Monitoring Design SDD015
-  - If Establish Cellular Connection SDD013finishes successfully, then Activate PDP Context Design SDD014
+  - If Establish Cellular Connection SDD013 finishes successfully, then Activate PDP Context Design SDD014
   - If Activate PDP Context Design SDD014 finishes successfully, then Open UDP socket connection to Soracom Harvest Data Design SDD018
   - if Open UDP socket connection to Soracom Harvest Data Design SDD018 finishes successfully, then enable Remote Client Application — Receive Messages Design SDD027

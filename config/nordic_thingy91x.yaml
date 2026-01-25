@@ -1,0 +1,16 @@
+device:
+  type: "nordic_thingy91x"
+  name: "Nordic Thingy:91 X"
+  manufacturer: "Nordic Semiconductor"
+  profile_class: "device_profiles.nordic_thingy91x.NordicThingy91XProfile"
+
+serial:
+  default_baudrate: 9600
+  supported_baudrates: [9600, 115200]
+
+network:
+  udp_port: 55555
+  udp_buffer_size: 256
+  harvest_endpoint: "harvest.soracom.io"
+  harvest_port: 8514
+  ip_filter: "100.127.10.16"

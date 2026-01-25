@@ -38,3 +38,7 @@ Thumbs.db
 
 # Doorstop generated documentation
 all/
+
+# Teraterm scripts (device-specific, not for version control)
+client.ttl
+*.ttl
