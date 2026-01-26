@@ -13,17 +13,17 @@ ref: ''
 reviewed: null
 text: |
   Remote Client Application shall implement a Device Profile Pattern to support multiple IoT device types with different AT command sets and operational workflows.
-  
+
   ## Architecture Overview
-  
+
   The Device Profile Pattern abstracts device-specific implementation details behind a common interface, allowing the Remote Client Application to support both Nordic Thingy:91 X and Murata Type 1SC-NTNG devices without code duplication.
-  
+
   ## Component Structure
-  
+
   ### 1. Base Device Profile (Abstract Interface)
-  
+
   Define abstract base class `BaseDeviceProfile` with the following methods:
-  
+
   - `initialize_network(serial_manager) -> bool` - Complete network initialization sequence including RAT selection, band configuration, and PDP context
   - `send_to_harvest(serial_manager, data: str) -> bool` - Send data to Soracom Harvest Data (handles encoding and multi-step operations)
   - `receive_udp(serial_manager, buffer_size: int) -> Optional[tuple]` - Receive UDP downlink data, returns (ip_addr, port, payload) or None
@@ -31,18 +31,18 @@ text: |
   - `get_signal_quality(serial_manager) -> dict` - Query signal quality metrics (RSRP, RSRQ, SINR, RSSI)
   - `parse_network_registration_urc(urc: str) -> Optional[dict]` - Parse network registration URCs (+CEREG, etc.)
   - `get_device_info() -> dict` - Return device metadata (name, manufacturer, supported features)
-  
+
   ### 2. Nordic Thingy:91 X Profile
-  
+
   Implement `NordicThingy91XProfile(BaseDeviceProfile)`:
-  
+
   **Key Characteristics:**
   - Single-command operations: `AT#XSENDTO`, `AT#XRECVFROM`, `AT#XBIND`
   - ASCII data encoding
   - Standard AT command set: `AT+CFUN`, `AT+CEREG`, `AT%XSYSTEMMODE`, `AT+CGDCONT`
   - UDP socket commands: `AT#XSOCKET=1,2,0` (stateless)
   - Response format: `#XRECVFROM: <size>,<ip_addr>,<port>` followed by `<data>`
-  
+
   **Network Initialization Sequence:**
   1. `AT+CFUN=0` - Disable modem
   2. `AT+CEREG=5` - Enable network registration URCs
@@ -53,18 +53,18 @@ text: |
   7. `AT+CGDCONT=1,"IP","soracom.io"` - Configure PDP context
   8. `AT#XSOCKET=1,2,0` - Open UDP socket
   9. `AT#XBIND=55555` - Bind UDP port
-  
+
   ### 3. Murata Type 1SC-NTNG Profile
-  
+
   Implement `MurataType1SCProfile(BaseDeviceProfile)`:
-  
+
   **Key Characteristics:**
-  - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND → DELETE
+  - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND
   - HEX data encoding (ASCII to HEX conversion required)
   - Murata-specific AT commands: `AT%RATIMGSEL`, `AT%RATACT`, `AT%SOCKETCMD`, `AT%SOCKETDATA`
   - Stateful socket lifecycle management
   - Different PDP context syntax: `AT%PDNSET=1,"soracom.io","IP"`
-  
+
   **Network Initialization Sequence:**
   1. `ATZ` - Reset modem, wait for `%BOOTEV:0`
   2. `AT+CSIM=52,"80C2000015D613190103820282811B0100130799F05000010001"` - Switch to LTE-M SIM plan
@@ -77,19 +77,19 @@ text: |
   9. `AT+CEREG=2` - Enable network registration URCs
   10. `AT+CFUN=1` - Enable modem
   11. Wait for `CEREG: 5` (registered)
-  
+
   **Send to Harvest (6-step process):**
   1. Convert ASCII data to HEX: `data.encode().hex().upper()`
   2. `AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514,0` - Allocate UDP socket
   3. `AT%SOCKETCMD="ACTIVATE",1` - Activate socket
   4. `AT%SOCKETDATA="SEND",1,<len>,"<hex_data>"` - Send HEX-encoded data
   5. Wait for `%SOCKETEV:1,1` URC (confirmation)
-  6. `AT%SOCKETCMD="DELETE",1` - Delete socket
-  
+
+
   ### 4. Device Configuration Files
-  
+
   Create YAML configuration files for each device:
-  
+
   **config/nordic_thingy91x.yaml:**
   ```yaml
   device:
@@ -97,11 +97,11 @@ text: |
     name: "Nordic Thingy:91 X"
     manufacturer: "Nordic Semiconductor"
     profile_class: "device_profiles.nordic_thingy91x.NordicThingy91XProfile"
-  
+
   serial:
     default_baudrate: 9600
     supported_baudrates: [9600, 115200]
-  
+
   network:
     udp_port: 55555
     udp_buffer_size: 256
@@ -109,7 +109,7 @@ text: |
     harvest_port: 8514
     ip_filter: "100.127.10.16"
   ```
-  
+
   **config/murata_type1sc_ntng.yaml:**
   ```yaml
   device:
@@ -117,11 +117,11 @@ text: |
     name: "Murata Type 1SC-NTNG"
     manufacturer: "Murata"
     profile_class: "device_profiles.murata_type1sc_ntng.MurataType1SCProfile"
-  
+
   serial:
     default_baudrate: 115200
     supported_baudrates: [115200, 460800]
-  
+
   network:
     udp_port: 55555
     udp_buffer_size: 256
@@ -130,11 +130,11 @@ text: |
     ltem_band: "20"
     ntn_band: "256"
   ```
-  
+
   ### 5. Device Profile Factory
-  
+
   Implement factory pattern to instantiate correct device profile:
-  
+
   ```python
   class DeviceProfileFactory:
       @staticmethod
@@ -146,31 +146,31 @@ text: |
           else:
               raise ValueError(f"Unsupported device type: {device_type}")
   ```
-  
+
   ### 6. Integration with Remote Client Application
-  
+
   Modify `RemoteClientApplication` class:
-  
+
   1. Add device selector dropdown in GUI (Nordic Thingy:91 X / Murata Type 1SC-NTNG)
   2. Load device configuration on startup or device selection
   3. Instantiate device profile via factory: `self.device_profile = DeviceProfileFactory.create(device_type, config)`
   4. Replace direct AT command calls with device profile methods:
-     - `self.initialize_cellular_network()` → `self.device_profile.initialize_network(self.serial)`
-     - `self.send_to_harvest_data(data)` → `self.device_profile.send_to_harvest(self.serial, data)`
-     - `self.receive_udp_message()` → `self.device_profile.receive_udp(self.serial, self.udp_buffer_size)`
+  - `self.initialize_cellular_network()` → `self.device_profile.initialize_network(self.serial)`
+  - `self.send_to_harvest_data(data)` → `self.device_profile.send_to_harvest(self.serial, data)`
+  - `self.receive_udp_message()` → `self.device_profile.receive_udp(self.serial, self.udp_buffer_size)`
   5. Preserve existing GUI, threading, and SerialManager infrastructure
-  
+
   ## Benefits
-  
+
   - **No Code Duplication**: Shared SerialManager, GUI layout, threading model, and application logic
   - **Easy Extension**: Add new IoT devices (including future NTN satellite devices) by implementing new profile classes
   - **Maintainable**: Device-specific logic isolated in dedicated profile modules
   - **Testable**: Mock device profiles for unit testing without hardware
   - **Configuration-Driven**: YAML files for device parameters, Python classes for behavioral logic
   - **Backward Compatible**: Existing Nordic Thingy:91 X functionality preserved by refactoring into profile class
-  
+
   ## Implementation Notes
-  
+
   - SerialManager class remains unchanged (handles low-level serial I/O, command/URC separation)
   - Device profiles handle high-level operations (multi-step sequences, encoding, parsing)
   - GUI displays device selection dropdown and loads appropriate configuration

@@ -106,20 +106,19 @@ class SoracomApiClient:
         except requests.RequestException as exc:
             return False, f"Network error: {exc}"
 
-    def fetch_harvest_messages(self, imsi: str, since_ms: Optional[int]) -> Tuple[bool, List[HarvestMessage] | str]:
-        """Fetch Harvest Data messages for the SIM since the given timestamp (REQ010).
-
-        Soracom Harvest Data API typically returns a list of dicts with time/content fields.
-        This helper attempts to parse the most common shapes without failing hard on unknown fields.
-        """
+    def fetch_harvest_messages(self, sim_id: str, since_ms: Optional[int]) -> Tuple[bool, List[HarvestMessage] | str]:
+        """Fetch Harvest Data messages for the SIM (by simId) since the given timestamp (REQ010)."""
         if not self.is_authenticated():
             return False, "Not authenticated"
+
+        if not sim_id:
+            return False, "Missing simId for Harvest fetch"
 
         params = {"resourceType": "harvest"}
         if since_ms is not None:
             # Use +1 to avoid re-fetching the same timestamped message repeatedly
             params["from"] = int(since_ms) + 1
-        url = f"{self.api_base}/v1/subscribers/{imsi}/data"
+        url = f"{self.api_base}/v1/sims/{sim_id}/data"
         try:
             resp = self.session.get(url, headers=self._headers(), params=params, timeout=10)
             if resp.status_code != 200:
@@ -225,6 +224,14 @@ class SoracomApiClient:
                             decoded_json = base64.b64decode(inner, validate=True).decode()
                             if decoded_json:
                                 return decoded_json
+                except Exception:
+                    pass
+                # Try HEX decode (for Murata device messages stored in Harvest)
+                try:
+                    if all(c in '0123456789ABCDEFabcdef' for c in candidate.strip()):
+                        decoded_hex = bytes.fromhex(candidate.strip()).decode('ascii')
+                        if decoded_hex:
+                            return decoded_hex
                 except Exception:
                     pass
                 # Try base64 decode first; fall back to raw string on failure
@@ -471,10 +478,10 @@ class CommunicatorApplication:
 
         self.message_input.delete("1.0", "end")
         # Per SDD025 step 5: Only display final status in chat (success/failure), not intermediate states
-        self.log_message("sent", f"Sending to {self.selected_sim_id}:{self.udp_port} (SDD025/SDD026)")
+        self.log_message("sent", f"Sending to {str(self.selected_sim_id)}:{self.udp_port} (SDD025/SDD026)")
 
         def worker():
-            success, info = self.api_client.send_downlink_udp(self.selected_sim_id, message, self.udp_port)
+            success, info = self.api_client.send_downlink_udp(str(self.selected_sim_id), message, self.udp_port)
             def finish():
                 if success:
                     self.log_message("sent", f"Downlink accepted: {info}")
@@ -501,32 +508,45 @@ class CommunicatorApplication:
             self._schedule_poll()
             return
         self.polling = True
-        imsi = self.imsi_var.get().strip()
-        if not imsi:
-            self.log_message("sys", "Missing IMSI (set SORACOM_IMSI)")
+        sim_id = str(self.selected_sim_id).strip()
+        if not sim_id:
             self.polling = False
             self._schedule_poll()
             return
 
         def worker():
-            success, result = self.api_client.fetch_harvest_messages(imsi, self.last_harvest_ts)
-            def finish():
-                if success and isinstance(result, list):
-                    for msg in result:
-                        key = (msg.timestamp_ms, msg.text)
-                        if key in self._seen_harvest:
-                            continue
-                        self._seen_harvest.add(key)
-                        if self.last_harvest_ts is None or msg.timestamp_ms > self.last_harvest_ts:
-                            self.last_harvest_ts = msg.timestamp_ms
-                        # Display received message in chat using Harvest timestamp (SDD029)
-                        self._append_chat("recv", f"[RECV] {msg.text}", ts=msg.timestamp)
-                        self.log_message("recv", f"Harvest at {msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
-                elif not success:
-                    self.log_message("sys", str(result))
+            try:
+                success, result = self.api_client.fetch_harvest_messages(sim_id, self.last_harvest_ts)
+                def finish():
+                    if success and isinstance(result, list):
+                        # Only log when messages are received
+                        if result:
+                            self.log_message("sys", f"[HARVEST] Fetched {len(result)} message(s)")
+                            for msg in result:
+                                self.log_message("sys", f"[HARVEST] Processing: timestamp={msg.timestamp_ms}, text='{msg.text}'")
+                                key = (msg.timestamp_ms, msg.text)
+                                if key in self._seen_harvest:
+                                    self.log_message("sys", f"[HARVEST] Skipping duplicate message")
+                                    continue
+                                self._seen_harvest.add(key)
+                                if self.last_harvest_ts is None or msg.timestamp_ms > self.last_harvest_ts:
+                                    self.last_harvest_ts = msg.timestamp_ms
+                                    self.log_message("sys", f"[HARVEST] Advancing cursor to {self.last_harvest_ts}")
+                                # Display received message in chat using Harvest timestamp (SDD029)
+                                self._append_chat("recv", f"[RECV] {msg.text}", ts=msg.timestamp)
+                                self.log_message("recv", f"Harvest at {msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+                        else:
+                            # Single line for empty polls
+                            self.log_message("sys", "[HARVEST] Fetched 0 message(s)")
+                    elif not success:
+                        self.log_message("sys", f"[HARVEST] Poll failed for simId={sim_id}: {result}")
+                    self.polling = False
+                    self._schedule_poll()
+                self.root.after(0, finish)
+            except Exception as exc:
+                self.log_message("sys", f"[HARVEST] Worker exception: {exc}")
                 self.polling = False
-                self._schedule_poll()
-            self.root.after(0, finish)
+                self.root.after(0, self._schedule_poll)
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -598,9 +618,9 @@ class CommunicatorApplication:
             return
         item = self.sims_tree.item(selection[0])
         values = item.get("values", [])
-        sim_id, imsi, session_status = (values + ["", "", ""])[:3]
-        # Store simId for use in sendDownlinkUdp
-        self.selected_sim_id = sim_id
+        sim_id, imsi, session_status = (values + ["", "", ""] )[:3]
+        # Store simId for use in sendDownlinkUdp; coerce to string to avoid int/strip issues
+        self.selected_sim_id = str(sim_id)
         if imsi:
             self.imsi_var.set(imsi)
         

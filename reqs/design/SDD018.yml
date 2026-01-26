@@ -10,9 +10,4 @@ links: []
 normative: true
 ref: ''
 reviewed: null
-text: |
-  The Remote Client Application shall implement the functionality to open a UDP socket connection to Soracom Harvest Data as follows:
-
-  - The application shall send AT command AT#XSOCKET=1,2,0
-  - The application shall parse the response from the IoT device to confirm that the UDP socket has been successfully opened.
-  - If the socket is opened successfully, the application shall log the success status.
+text: ''

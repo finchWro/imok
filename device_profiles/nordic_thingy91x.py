@@ -81,11 +81,40 @@ class NordicThingy91XProfile(BaseDeviceProfile):
         # Response may be empty or contain OK/#XBIND confirmation
         return success
 
+    def open_socket_connection(self, serial_manager) -> bool:
+        """Open UDP socket connection to Soracom Harvest Data (SDD037)."""
+        cmd = "AT#XSOCKET=1,2,0"
+        
+        if hasattr(serial_manager, 'app') and serial_manager.app:
+            serial_manager.app.log_message("sent", f"[SEND] {cmd} - Open UDP socket")
+        
+        success, response = serial_manager.send_command(cmd)
+        
+        if hasattr(serial_manager, 'app') and serial_manager.app and response:
+            serial_manager.app.log_message("recv", f"[RECV] {response}")
+        
+        return success
+
+    def activate_pdp_context(self, serial_manager) -> bool:
+        """Configure PDP context for SORACOM APN per SDD035."""
+        cmd = 'AT+CGDCONT=1,"IP","soracom.io"'
+        
+        if hasattr(serial_manager, 'app') and serial_manager.app:
+            serial_manager.app.log_message("sent", f"[SEND] {cmd} - Configure PDP context")
+        
+        success, response = serial_manager.send_command(cmd)
+        
+        if hasattr(serial_manager, 'app') and serial_manager.app and response:
+            serial_manager.app.log_message("recv", f"[RECV] {response}")
+        
+        return success
+
     def send_to_harvest(self, serial_manager, data: str) -> bool:
         """
-        Send data to Soracom Harvest Data via AT#XSENDTO (SDD019).
+        Send data to Soracom Harvest Data via AT#XSENDTO (SDD019/SDD039).
         
-        Single command operation - ASCII encoding (no conversion needed).
+        Single command operation per SDD039 - ASCII encoding (no conversion needed).
+        Response format: #XSENDTO: <size> where size is bytes sent.
         """
         harvest_endpoint = "harvest.soracom.io"
         harvest_port = 8514
@@ -116,17 +145,31 @@ class NordicThingy91XProfile(BaseDeviceProfile):
 
     def receive_udp(self, serial_manager, buffer_size: int) -> Optional[Tuple[str, int, str]]:
         """
-        Receive UDP downlink data via AT#XRECVFROM (SDD027/SDD028).
+        Receive UDP downlink data via AT#XRECVFROM (SDD041).
         
-        Response format per SDD027:
-        #XRECVFROM: <size>,<ip_addr>,<port>
+        Per SDD041:
+        1) Bind to UDP port using AT#XBIND (done in bind_udp_port)
+        2) Wait for +CSCON:1 notification
+        3) Read incoming message using AT#XRECVFROM=<buffer_size>
+        4) Parse response and display with timestamp
+        5) Filter to display only from ip_addr="100.127.10.16"
+        
+        Response format per SDD041:
+        #XRECVFROM: <size>,"<ip_addr>",<port>
         <data>
         OK
         
-        Returns: (ip_address, port, payload) or None on failure
+        Returns: (ip_address, port, payload) or None on failure/timeout
         """
         cmd = f"AT#XRECVFROM={buffer_size}"
+        
+        if hasattr(serial_manager, 'app') and serial_manager.app:
+            serial_manager.app.log_message("sent", f"[SEND] {cmd} - Receive UDP data")
+        
         success, response = serial_manager.send_command(cmd, timeout=5.0)
+
+        if hasattr(serial_manager, 'app') and serial_manager.app and response:
+            serial_manager.app.log_message("recv", f"[RECV] {response}")
 
         if not success or not response:
             return None
@@ -176,13 +219,17 @@ class NordicThingy91XProfile(BaseDeviceProfile):
             # Get payload from parsed data
             payload = data_part.strip() if data_part else ""
 
-            # Filter by IP address (SDD027 step 6)
+            # SDD041 step 6: Display message only when received from ip_addr="100.127.10.16"
             if ip_addr != "100.127.10.16":
+                if hasattr(serial_manager, 'app') and serial_manager.app:
+                    serial_manager.app.log_message("sys", f"[FILTER] Ignoring message from {ip_addr} (not 100.127.10.16)")
                 return None
 
             return (ip_addr, port, payload)
 
-        except (ValueError, IndexError, AttributeError):
+        except (ValueError, IndexError, AttributeError) as e:
+            if hasattr(serial_manager, 'app') and serial_manager.app:
+                serial_manager.app.log_message("sys", f"[ERROR] Failed to parse #XRECVFROM response: {e}")
             return None
 
     def get_signal_quality(self, serial_manager) -> Optional[Dict[str, int]]:

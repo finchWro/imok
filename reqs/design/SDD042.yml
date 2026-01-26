@@ -1,0 +1,52 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: 'Remote Client Application — Receive Messages with Murata Type 1SC-NTN device Design'
+level: 9.1.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall received messages from the Communicator Application over the established UDP socket connection (see UDP Transmission Design SDD026) and process them accordingly.
+
+  - Create UDP socket with command AT%SOCKETCMD="ALLOCATE",1,"UDP","LISTEN","0.0.0.0",,<udp_port> where <udp_port> is defined in UDP Transmission Design SDD026.
+  - Wait for notification %SOCKETCMD:<socket_id> where <socket_id> is the socket ID allocated in previous step.
+  - Activate the socket with command AT%SOCKETCMD="ACTIVATE",<socket_id> where <socket_id> is the socket ID allocated in previous step.
+  - When data is received from the server on the specified socket ID, the following notification will appear: %SOCKETEV:<session_id>,<socket_id> and the Remote Client Application shall proceed to read the incoming UDP message.
+  - To read all data upto maximum 1500 bytes, the Remote Client Application shall issue the AT command: AT%SOCKETDATA="RECEIVE",<socket_id>,1500 where <socket_id> is the socket ID allocated in previous step.
+  - The Remote Client Application shall parse the received message %SOCKETDATA: and display it to the user in the GUI chat area with timestamp and status (received).
+  - Received messages is in <rdata> field of the response from AT%SOCKETDATA command.
+
+  Note:
+  1) %SOCKETDATA: received message format:
+    %SOCKETDATA:<socket_id>,<rlength>,<moreData>,"<rdata>","<src_ip>",<src_port>
+     Where:
+      <socket_id> : Socket ID on which data is received.
+      <rlength> : Length of the received data in bytes.
+      <moreData> : Indicates if more data is available to read (1: more data, 0: no more data).
+      <rdata> : The actual received data in HEX format.
+      <src_ip> : Source IP address from which data is received.
+      <src_port> : Source port number from which data is received.
+  2) %SOCKETEV: notification format:
+    %SOCKETEV:<session_id>,<socket_id>
+     Where:
+      <session_id> : Session ID on which the event occurred.
+      <socket_id> : Socket ID on which the event occurred.
+  3) %SOCKETCMD: notification format:
+    %SOCKETCMD:<socket_id>
+     Where:
+      <socket_id> : Socket ID on which the command event occurred.
+
+  Example communications:
+  1) If data is received successfully the module will return the following reply to indicate arriving data session_id=1, socket_id=1: 
+  %SOCKETEV:1,1
+  2) Read the arriving data: 
+  AT%SOCKETDATA="RECEIVE",1,1500
+  3) Expected response: 
+  %SOCKETDATA:1,3,0,"323031","100.127.69.42",23080
+  This corresponds to ASCII 201, which is the received message.
+
+

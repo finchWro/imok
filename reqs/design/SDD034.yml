@@ -1,0 +1,63 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Establish connection with NTNG cellular network with Murata Type 1SC-NTNG device Design
+level: 9.3.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall establish and maintain a connection with the NTN cellular network to facilitate communication with the Communicator Application. This includes:
+  Configure the cellular modem with necessary settings to connect to the NTN network. This includes:
+  - Check SIM state AT+CPIN? command to ensure SIM is ready.
+  - Set the error reporting to verbose with command AT%SETACFG="manager.urcBootEv.enabled","true"
+  - Set SIM initialization selection policy with command AT%SETCFG="SIM_INIT_SELECT_POLICY","0"
+  - Reset the modem using ATZ command and wait for the "%BOOTEV:0" response.
+  - Set the NTN Parameter with commands:
+    AT%SETACFG="radiom.config.multi_rat_enable","true"
+    AT%SETACFG="radiom.config.preferred_rat_list","none"
+    AT%SETACFG="radiom.config.auto_preference_mode","none"
+    AT%SETACFG="locsrv.operation.locsrv_enable","true"
+    AT%SETACFG="locsrv.internal_gnss.auto_restart","enable"
+    AT%SETACFG="modem_apps.Mode.AutoConnectMode","true"
+  - Reset the modem again using ATZ command and wait for the "%BOOTEV:0" response.
+  - Switch to NTN plan with command AT+CSIM=52,"80C2000015D613190103820282811B0100130799F08900010001"
+  - RAT image selection with AT%RATIMGSEL=2 command.
+  - Switch to NTN plan with AT%RATACT="NBNTN","1" command.
+  - Lock to Europe S band with AT%SETCFG="BAND","256" command.
+  - Disable modem with AT+CFUN=0 command.
+  - Enable GNSS and NTN reception notification:
+    AT%IGNSSEV="FIX",1
+    AT%NOTIFYEV="SIB31",1
+  - Disable iGNSS
+    AT%IGNSSACT=0
+  - Enable iGNSS
+    AT%IGNSSACT=1
+  - Wait for GNSS fix notification.it is crucial to wait until a valid GPS location is acquired before continuing operations. This ensures that the device is properly connected to the satellite network and can function accurately within its coverage.
+
+    example response
+
+    %IGNSSEVU:"FIX",1,"09:25:24","11/09/2024","xxxxx","-yyyyyy","113.6",1726046724000,4.6,"0.000000","B",7
+  - AT+CEREG=2 - Enable network registration URCs with location info
+  - Enable radio with AT+CFUN=1 command.
+  - wait for satellite detection notification %NOTIFYEV: "SIB31"
+  - Monitor network registration status by handling unsolicited network status notifications from the modem. The application shall interpret these notifications to determine the current network status and update the connection status accordingly.
+
+  Successful establishment shall be indicated based on the network status notification +CEREG: <stat>,"XXX","YYYY",Z where <stat>=1 (registered, home network) or <stat>=5 (registered, roaming).
+
+  Postconditions:
+  -Established connection with cellular network i.e IoT device is registered on the cellular network (<stat>=1 (registered, home network) or <stat>=5 (registered, roaming). ).
+
+  Note:
+  <stat> values
+    0 - Not registered. User Equipment (UE) is not currently searching for an operator to register to.
+    1 - Registered, home network
+    2 - Not registered, but UE is currently trying to attach or searching an operator to register to
+    3 - Registration denied
+    4 - Unknown (for example, out of Evolved Terrestrial Radio Access Network (E-UTRAN) coverage)
+    5 - Registered, roaming
+    90 - Not registered due to Universal Integrated Circuit Card (UICC) failure

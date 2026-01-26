@@ -1,0 +1,40 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  PDP Context Configuration with Murata Type 1SC-NTNG device Design
+level: 9.4.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  |
+  The Remote Client Application shall configure PDP context for data communication with the cellular network as follows:
+
+  - The application shall send the AT command AT+CGDCONT=1,"IP","soracom.io" to the modem to configure the PDP context (e.g., SORACOM APN settings).
+  - Ping SORACOM server with command AT%PINGCMD=0,"100.127.100.127",1,50,30
+  - Wait for the notification %PINGCMD indicating successful ping to the server for up to 30 seconds.
+  
+  Postconditions:
+  - The Remote Client Application shall confirm that the PDP context is successfully configured by verifying the %PINGCMD response from the modem.
+
+  Note:
+  %PingCMD response format:
+  %PINGCMD:<ip_type>,<dst_ip>,<ttl>,<rtt>
+  where,
+  <ip_type>: IP type (0: IPv4, 1: IPv6)
+  <dst_ip>: Destination IP address
+  <ttl>: Time to Live value of the ping response
+  <rtt>: Round Trip Time in milliseconds
+
+  AT%PINGCMD command format:
+  AT%PINGCMD:<ip_type>,<dst_ip>[,<count>[,<pktsize>[,<timeout>]]]
+  where,
+  <ip_type>: IP type (0: IPv4, 1: IPv6)
+  <dst_ip>: Destination IP address
+  <count>: decimal. The number of ping request retries (default is 1).
+  <packetsize>: decimal. specifies the number of data bytes to be sent. The default is 56, which translates into 64 ICMP data bytes when combined with the 8 bytes of ICMP header data.Maximum size in IPv4 is 9936 Bytes. Maximum size in IPv6 is 9908 Bytes.
+  <timeout>: decimal. Time to wait for a response, in seconds

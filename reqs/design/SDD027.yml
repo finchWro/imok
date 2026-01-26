@@ -10,25 +10,4 @@ links: []
 normative: true
 ref: ''
 reviewed: null
-text: |
-  The Remote Client Application shall received messages from the Communicator Application over the established UDP socket connection (see UDP Transmission Design SDD026) and process them accordingly.
-
-  1) The Remote Client Application shall bind to UDP port defined in UDP Transmission Design SDD026 to listen for incoming messages from the Communicator Application using AT command AT#XBIND=<udp_port>.
-  3) The Remote Client Application after reception of notification from the modem +CSCON: 1 shall read the incoming UDP message using AT command AT#XRECVFROM=<buffer_size> where <buffer_size> is definded in UDP buffer size Design SDD028.
-  4) The Remote Client Application shall parse the received message and display it to the user in the GUI chat area with timestamp and status (received).
-  5) Received messages is in <data> field of the response from AT#XRECVFROM command.
-  6 The Remote Client Application shall display message only when recived from ip_addr="100.127.10.16"
-
-  Note:
-  - Example communications:
-  AT#XRECVFROM=<buffer_size>
-  #XRECVFROM:<size>,"<ip_addr>",<port>
-  <data>
-  OK
-
-  Where:
-
-    The <data> value is a string that contains the data being received.
-    The <size> value is an integer that represents the actual number of bytes received.
-    The <ip_addr> value is a string that represents the IPv4 or IPv6 address of remote peer.
-    The <port> value is an integer that represents the port number of the remote peer.
+text: ''

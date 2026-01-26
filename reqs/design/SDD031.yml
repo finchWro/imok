@@ -1,0 +1,14 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Connect to Thingy:91 X device Design
+level: 9.2.1
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall implement function to establish a connection to the IoT device via a serial interface. Initial connection parameters such as baud rate, parity, and stop bits shall be configurable through the application settings.To ensure reliable communication, the Remote Client Application shall send an AT command to the IoT device upon establishing the connection and wait for an "OK" response before proceeding with further operations and set the connection status accordingly.

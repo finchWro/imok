@@ -53,6 +53,21 @@ class BaseDeviceProfile(ABC):
         pass
 
     @abstractmethod
+    def open_socket_connection(self, serial_manager) -> bool:
+        """
+        Open UDP socket connection to Soracom Harvest Data (SDD018/SDD037/SDD038).
+        
+        Device-specific implementation for creating UDP socket.
+        
+        Args:
+            serial_manager: SerialManager instance
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        pass
+
+    @abstractmethod
     def send_to_harvest(self, serial_manager, data: str) -> bool:
         """
         Send data to Soracom Harvest Data (SDD019).
@@ -92,6 +107,19 @@ class BaseDeviceProfile(ABC):
             
         Returns:
             dict with keys: rsrp, rsrq, sinr, rssi (all in dBm) or None on failure
+        """
+        pass
+
+    @abstractmethod
+    def activate_pdp_context(self, serial_manager) -> bool:
+        """
+        Configure PDP context for data communication (SDD014/SDD035/SDD036).
+        
+        Args:
+            serial_manager: SerialManager instance
+            
+        Returns:
+            bool: True if successful, False otherwise
         """
         pass
 

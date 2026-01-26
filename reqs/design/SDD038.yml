@@ -1,0 +1,20 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  Open UDP socket connection to Soracom Harvest Data with Murata Type 1SC-NTNG device Design
+level: 9.7.2
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall implement the functionality to open a UDP socket connection to Soracom Harvest Data as follows:
+
+  - Enable socket events with command AT%SOCKETEV=0,1
+  - Create UDP socket with command AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514
+  - Activate the socket with command AT%SOCKETCMD="ACTIVATE",1
+  - The application shall parse the response from the IoT device to confirm that the UDP socket has been successfully opened (OK response).
+  - If the socket is opened successfully, the application shall log the success status.
