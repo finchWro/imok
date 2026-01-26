@@ -2,13 +2,13 @@
 
 **IMOK** (I'm OK) is a bi-directional communication system that enables message exchange via IoT devices in remote or challenging environments. The system allows users to send "I'm OK" status updates and communicate with remote locations through cellular IoT networks.
 
-**Future Vision:** The IMOK system is designed to evolve with IoT NTN (Non-Terrestrial Network) technology, enabling communication in remote locations covered only by satellite networks. This will extend coverage to areas beyond traditional cellular infrastructure, ensuring connectivity anywhere on Earth.
+**NTN Support:** The IMOK system supports IoT NTN (Non-Terrestrial Network) technology via the Murata Type 1SC-NTNG device, enabling satellite-based communication in remote locations beyond traditional cellular infrastructure. This provides connectivity anywhere on Earth, including areas with no terrestrial network coverage.
 
 ## Current Implementation
 
 The IMOK system consists of two Python/Tkinter applications that communicate via Soracom's cellular network and Harvest Data API:
 
-- **Remote Client Application** - Interfaces with IoT devices (Nordic Thingy:91 X, Murata Type 1SC-NTNG) via serial using Device Profile Pattern, sends messages to Soracom Harvest Data, and receives UDP downlink messages from the Communicator
+- **Remote Client Application** - Interfaces with IoT devices (Nordic Thingy:91 X for LTE-M, Murata Type 1SC-NTNG for LTE-M/NB-IoT-NTN) via serial using Device Profile Pattern, sends messages to Soracom Harvest Data, and receives UDP downlink messages from the Communicator
 - **Communicator Application** - Authenticates with Soracom API, manages SIM inventory, sends UDP downlink messages to Remote Client, and polls Harvest Data for received messages
 
 ### Supported IoT Devices
@@ -18,15 +18,18 @@ The Remote Client Application uses a **Device Profile Pattern** (SDD030) to supp
 1. **Nordic Thingy:91 X** (Nordic Semiconductor)
    - Single-command operations: `AT#XSENDTO`, `AT#XRECVFROM`, `AT#XBIND`
    - ASCII data encoding
-   - Standard AT commands for LTE-M
+   - Standard AT commands for LTE-M (terrestrial cellular)
    - Default baud rate: 9600
 
-2. **Murata Type 1SC-NTNG** (Murata)
-   - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND → DELETE
+2. **Murata Type 1SC-NTNG** (Murata) - **NTN-Capable**
+   - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND
    - HEX data encoding (ASCII to HEX conversion)
    - Murata-specific AT commands: `AT%SOCKETCMD`, `AT%SOCKETDATA`
-   - Supports LTE-M and NB-IoT-NTN
+   - **Supports NB-IoT-NTN (satellite)** and LTE-M (terrestrial)
+   - GNSS integration for satellite network acquisition
+   - Europe S-band (256) for NTN connectivity
    - Default baud rate: 115200
+   - **Use Case**: Remote locations beyond cellular coverage (mountains, oceans, deserts)
 
 The Device Profile Pattern allows easy addition of new IoT device types by implementing a common interface without modifying core application logic.
 
@@ -38,7 +41,7 @@ The Device Profile Pattern allows easy addition of new IoT device types by imple
 │  (Python/Tkinter)       │         │  (Python/Tkinter)        │
 │                         │         │                          │
 │  - Serial (AT commands) │         │  - Soracom REST API      │
-│  - LTE-M Network        │         │  - SIM Management        │
+│  - LTE-M/NB-IoT-NTN     │         │  - SIM Management        │
 │  - Harvest Data Send    │         │  - Harvest Data Poll     │
 │  - UDP Receive (55555)  │         │  - UDP Downlink Send     │
 └──────────┬──────────────┘         └──────────┬───────────────┘
@@ -50,12 +53,21 @@ The Device Profile Pattern allows easy addition of new IoT device types by imple
            ▼                                   ▼
 ┌─────────────────────────┐         ┌──────────────────────────┐
 │  Nordic Thingy:91 X     │◄───────►│  Soracom Platform        │
-│  IoT Device             │  LTE-M  │  - Harvest Data API      │
-│                         │ (2-way) │  - Downlink UDP (55555)  │
-│  - LTE-M Modem          │         │  - SIM Management        │
+│  or Murata Type1SC-NTNG │ LTE-M/  │  - Harvest Data API      │
+│  IoT Device             │  NTN    │  - Downlink UDP (55555)  │
+│                         │ (2-way) │  - SIM Management        │
+│  - LTE-M/NB-IoT-NTN     │         │                          │
 │  - AT Commands          │  Uplink: Harvest Data              │
 │  - UDP Socket           │  Downlink: UDP (port 55555)        │
+│  - GNSS (NTN devices)   │                                    │
 └─────────────────────────┘         └──────────────────────────┘
+            ▲
+            │ (NTN only)
+            │
+     ┌──────┴──────┐
+     │  Satellite  │
+     │  Network    │
+     └─────────────┘
 ```
 
 ## Requirements
@@ -63,11 +75,11 @@ The Device Profile Pattern allows easy addition of new IoT device types by imple
 ### System Requirements
 - **Python**: 3.13+
 - **Hardware**: 
-  - Nordic Thingy:91 X IoT device (for Remote Client)
+  - Nordic Thingy:91 X (LTE-M) or Murata Type 1SC-NTNG (LTE-M/NB-IoT-NTN) IoT device
   - Serial port/USB connection
 - **Network**:
   - Soracom SIM with active subscription
-  - LTE-M network coverage
+  - LTE-M network coverage (Nordic) or NTN satellite coverage (Murata)
   - Soracom account with API credentials
 
 ### Python Dependencies
@@ -131,10 +143,13 @@ python remote_client.py
 - **SDD016 Compliance**: Sequential initialization - waits for network registration before proceeding with UDP socket operations
 
 **Workflow:**
-1. Select device type (Nordic Thingy:91 X or Murata Type 1SC-NTNG)
-2. Select COM port and appropriate baud rate
+1. Select device type (Nordic Thingy:91 X for LTE-M or Murata Type 1SC-NTNG for NTN)
+2. Select COM port and appropriate baud rate (9600 for Nordic, 115200 for Murata)
 3. Click **Connect** - initiates cellular network registration
+   - **Murata NTN**: Waits for GNSS fix before network registration (crucial for satellite connectivity)
+   - **Nordic LTE-M**: Proceeds directly to network registration
 4. Application waits for network registration (`+CEREG 1/5` or `CEREG: 5`) per SDD016 requirements
+   - **Timeout**: 60s for terrestrial LTE-M, 120s for NTN satellite
 5. Only after successful registration: PDP context activation, UDP socket opening, and port binding
 6. Send messages to Harvest Data or receive downlink from Communicator
 
@@ -180,16 +195,34 @@ python communicator_app.py
 
 ### AT Commands (Remote Client)
 
-Key AT commands implemented per ITU-T V.250:
+**Nordic Thingy:91 X (LTE-M):**
 - `AT+CFUN=1` - Set modem to full functionality
 - `AT+CEREG=5` - Enable network registration URCs
-- `AT%XSYSTEMMODE=1,0,0,0` - Set LTE-M only mode
+- `AT%XSYSTEMMODE=1,0,1,0` - Set LTE-M mode
 - `AT+CGDCONT=1,"IP","soracom.io"` - Configure PDP context for Soracom APN
 - `AT%CESQ=1` - Subscribe to signal quality (RSRP) notifications
 - `AT#XSOCKET=1,2,0` - Open UDP socket
 - `AT#XBIND=55555` - Bind UDP port 55555 for downlink receive
 - `AT#XSENDTO="harvest.soracom.io",8514,"<data>"` - Send to Harvest Data
-- `AT#XRECVFROM=256` - Receive UDP data (256 byte buffer)
+- `AT#XRECVFROM=1500` - Receive UDP data (1500 byte buffer)
+
+**Murata Type 1SC-NTNG (NB-IoT-NTN):**
+- `AT+CPIN?` - Check SIM state
+- `AT%SETACFG="radiom.config.multi_rat_enable","true"` - Enable multi-RAT
+- `AT+CSIM=52,"80C2000015D613190103820282811B0100130799F08900010001"` - Switch to NTN SIM plan
+- `AT%RATIMGSEL=2` - Select NTN RAT image
+- `AT%RATACT="NBNTN","1"` - Activate NB-IoT-NTN RAT
+- `AT%SETCFG="BAND","256"` - Lock to Europe S band
+- `AT%IGNSSACT=1` - Enable iGNSS (wait for fix before network registration)
+- `AT+CEREG=2` - Enable network registration URCs with location
+- `AT+CGDCONT=1,"IP","soracom.io"` - Configure PDP context
+- `AT%PINGCMD=0,"100.127.100.127",1,50,30` - Ping Soracom server (verify PDP context)
+- `AT%SOCKETEV=0,1` - Enable socket events
+- `AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514` - Allocate socket to Harvest
+- `AT%SOCKETCMD="ACTIVATE",1` - Activate socket
+- `AT%SOCKETDATA="SEND",1,<size>,"<hex_data>"` - Send HEX-encoded data
+- `AT%SOCKETCMD="ALLOCATE",1,"UDP","LISTEN","0.0.0.0",,55555` - Allocate LISTEN socket for downlink
+- `AT%SOCKETDATA="RECEIVE",2,1500` - Receive UDP data on socket 2
 
 ### Design Documents
 
@@ -202,6 +235,7 @@ The system implements requirements defined in Doorstop documents:
 **Design Specifications (SDD):**
 - SDD001-SDD019: Remote Client detailed design
 - SDD020-SDD029: Communicator detailed design
+- SDD030-SDD042: Device-specific implementations (Nordic LTE-M, Murata NTN)
 
 Generate documentation:
 ```powershell
@@ -236,13 +270,18 @@ View in browser: `all/index.html`
 
 **Network registration fails:**
 - Verify SIM is inserted and active
-- Check LTE-M coverage in your area
+- **Nordic (LTE-M)**: Check LTE-M coverage in your area
+- **Murata (NTN)**: 
+  - Ensure GNSS fix is acquired (requires clear sky view for satellite signal)
+  - Check satellite coverage for your location (Europe S-band)
+  - Typical registration time: 60-120 seconds after GNSS fix
 - Review message log for `+CEREG` status codes
 
 **Cannot receive downlink messages:**
 - Ensure UDP port 55555 is bound (check log for `[SUCCESS] UDP port 55555 bound`)
-- Verify `+CSCON: 1` URC is received when Communicator sends
-- Check source IP filtering (must be `100.127.10.16`)
+- **Nordic**: Verify `+CSCON: 1` URC is received when Communicator sends, check source IP filtering (100.127.10.16)
+- **Murata**: Verify `%SOCKETEV:<session_id>,<socket_id>` notification is received, check Soracom IP range (100.127.x.x)
+- Review socket allocation logs to confirm correct socket IDs are used
 
 ### Communicator Issues
 
@@ -274,7 +313,8 @@ imok/
 ├── reqs/                   # Doorstop requirements
 │   ├── REQ001.yml - REQ011.yml
 │   └── design/             # Design specifications
-│       └── SDD001.yml - SDD029.yml
+│       ├── SDD001.yml - SDD029.yml
+│       └── SDD030.yml - SDD042.yml  # Device-specific (Nordic/Murata)
 └── .venv/                  # Virtual environment (ignored)
 ```
 
@@ -302,6 +342,7 @@ imok/
 
 ## Acknowledgments
 
-- Nordic Semiconductor for Thingy:91 X hardware
-- Soracom for IoT connectivity platform
+- Nordic Semiconductor for Thingy:91 X hardware (LTE-M)
+- Murata for Type 1SC-NTNG hardware (NB-IoT-NTN satellite connectivity)
+- Soracom for IoT connectivity platform (terrestrial and satellite)
 - Doorstop for requirements management
