@@ -2,13 +2,13 @@
 
 **IMOK** (I'm OK) is a bi-directional communication system that enables message exchange via IoT devices in remote or challenging environments. The system allows users to send "I'm OK" status updates and communicate with remote locations through cellular IoT networks.
 
-**NTN Support:** The IMOK system supports IoT NTN (Non-Terrestrial Network) technology via the Murata Type 1SC-NTNG device, enabling satellite-based communication in remote locations beyond traditional cellular infrastructure. This provides connectivity anywhere on Earth, including areas with no terrestrial network coverage.
+**NTN Support:** The IMOK system supports IoT NTN (Non-Terrestrial Network) technology via the Murata Type 1SC-NTN device, enabling satellite-based communication in remote locations beyond traditional cellular infrastructure. This provides connectivity anywhere on Earth, including areas with no terrestrial network coverage.
 
 ## Current Implementation
 
 The IMOK system consists of two Python/Tkinter applications that communicate via Soracom's cellular network and Harvest Data API:
 
-- **Remote Client Application** - Interfaces with IoT devices (Nordic Thingy:91 X for LTE-M, Murata Type 1SC-NTNG for LTE-M/NB-IoT-NTN) via serial using Device Profile Pattern, sends messages to Soracom Harvest Data, and receives UDP downlink messages from the Communicator
+- **Remote Client Application** - Interfaces with IoT devices (Nordic Thingy:91 X for LTE-M, Murata Type 1SC-NTN for LTE-M/NB-IoT-NTN) via serial using Device Profile Pattern, sends messages to Soracom Harvest Data, and receives UDP downlink messages from the Communicator
 - **Communicator Application** - Authenticates with Soracom API, manages SIM inventory, sends UDP downlink messages to Remote Client, and polls Harvest Data for received messages
 
 ### Supported IoT Devices
@@ -21,7 +21,7 @@ The Remote Client Application uses a **Device Profile Pattern** (SDD030) to supp
    - Standard AT commands for LTE-M (terrestrial cellular)
    - Default baud rate: 9600
 
-2. **Murata Type 1SC-NTNG** (Murata) - **NTN-Capable**
+2. **Murata Type 1SC-NTN** (Murata) - **NTN-Capable**
    - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND
    - HEX data encoding (ASCII to HEX conversion)
    - Murata-specific AT commands: `AT%SOCKETCMD`, `AT%SOCKETDATA`
@@ -53,7 +53,7 @@ The Device Profile Pattern allows easy addition of new IoT device types by imple
            ▼                                   ▼
 ┌─────────────────────────┐         ┌──────────────────────────┐
 │  Nordic Thingy:91 X     │◄───────►│  Soracom Platform        │
-│  or Murata Type1SC-NTNG │ LTE-M/  │  - Harvest Data API      │
+│  or Murata Type1SC-NTN │ LTE-M/  │  - Harvest Data API      │
 │  IoT Device             │  NTN    │  - Downlink UDP (55555)  │
 │                         │ (2-way) │  - SIM Management        │
 │  - LTE-M/NB-IoT-NTN     │         │                          │
@@ -75,7 +75,7 @@ The Device Profile Pattern allows easy addition of new IoT device types by imple
 ### System Requirements
 - **Python**: 3.13+
 - **Hardware**: 
-  - Nordic Thingy:91 X (LTE-M) or Murata Type 1SC-NTNG (LTE-M/NB-IoT-NTN) IoT device
+  - Nordic Thingy:91 X (LTE-M) or Murata Type 1SC-NTN (LTE-M/NB-IoT-NTN) IoT device
   - Serial port/USB connection
 - **Network**:
   - Soracom SIM with active subscription
@@ -110,7 +110,7 @@ pip install -r requirements.txt
 ## Configuration
 
 ### Remote Client Application
-- Connect supported IoT device (Nordic Thingy:91 X or Murata Type 1SC-NTNG) via USB/Serial
+- Connect supported IoT device (Nordic Thingy:91 X or Murata Type 1SC-NTN) via USB/Serial
 - Select device type from dropdown (Device Configuration section)
 - Select COM port and baud rate in GUI
 - Application automatically uses appropriate AT commands for selected device
@@ -132,7 +132,7 @@ python remote_client.py
 ```
 
 **Features:**
-- **Device Selection**: Choose between Nordic Thingy:91 X and Murata Type 1SC-NTNG
+- **Device Selection**: Choose between Nordic Thingy:91 X and Murata Type 1SC-NTN
 - **Connection Status**: Green (connected + network registered), Yellow (connecting/offline), Red (disconnected)
 - **Serial Configuration**: Select COM port and baud rate
 - **Signal Quality**: Real-time RSRP display (dBm)
@@ -143,7 +143,7 @@ python remote_client.py
 - **SDD016 Compliance**: Sequential initialization - waits for network registration before proceeding with UDP socket operations
 
 **Workflow:**
-1. Select device type (Nordic Thingy:91 X for LTE-M or Murata Type 1SC-NTNG for NTN)
+1. Select device type (Nordic Thingy:91 X for LTE-M or Murata Type 1SC-NTN for NTN)
 2. Select COM port and appropriate baud rate (9600 for Nordic, 115200 for Murata)
 3. Click **Connect** - initiates cellular network registration
    - **Murata NTN**: Waits for GNSS fix before network registration (crucial for satellite connectivity)
@@ -206,7 +206,7 @@ python communicator_app.py
 - `AT#XSENDTO="harvest.soracom.io",8514,"<data>"` - Send to Harvest Data
 - `AT#XRECVFROM=1500` - Receive UDP data (1500 byte buffer)
 
-**Murata Type 1SC-NTNG (NB-IoT-NTN):**
+**Murata Type 1SC-NTN (NB-IoT-NTN):**
 - `AT+CPIN?` - Check SIM state
 - `AT%SETACFG="radiom.config.multi_rat_enable","true"` - Enable multi-RAT
 - `AT+CSIM=52,"80C2000015D613190103820282811B0100130799F08900010001"` - Switch to NTN SIM plan
@@ -343,6 +343,6 @@ imok/
 ## Acknowledgments
 
 - Nordic Semiconductor for Thingy:91 X hardware (LTE-M)
-- Murata for Type 1SC-NTNG hardware (NB-IoT-NTN satellite connectivity)
+- Murata for Type 1SC-NTN hardware (NB-IoT-NTN satellite connectivity)
 - Soracom for IoT connectivity platform (terrestrial and satellite)
 - Doorstop for requirements management

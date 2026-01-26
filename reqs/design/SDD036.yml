@@ -4,7 +4,7 @@ doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
 header: |
-  PDP Context Configuration with Murata Type 1SC-NTNG device Design
+  PDP Context Configuration with Murata Type 1SC-NTN device Design
 level: 9.4.2
 links: []
 normative: true

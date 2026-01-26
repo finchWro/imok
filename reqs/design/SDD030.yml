@@ -16,7 +16,7 @@ text: |
 
   ## Architecture Overview
 
-  The Device Profile Pattern abstracts device-specific implementation details behind a common interface, allowing the Remote Client Application to support both Nordic Thingy:91 X and Murata Type 1SC-NTNG devices without code duplication.
+  The Device Profile Pattern abstracts device-specific implementation details behind a common interface, allowing the Remote Client Application to support both Nordic Thingy:91 X and Murata Type 1SC-NTN devices without code duplication.
 
   ## Component Structure
 
@@ -54,7 +54,7 @@ text: |
   8. `AT#XSOCKET=1,2,0` - Open UDP socket
   9. `AT#XBIND=55555` - Bind UDP port
 
-  ### 3. Murata Type 1SC-NTNG Profile
+  ### 3. Murata Type 1SC-NTN Profile
 
   Implement `MurataType1SCProfile(BaseDeviceProfile)`:
 
@@ -114,7 +114,7 @@ text: |
   ```yaml
   device:
     type: "murata_type1sc_ntng"
-    name: "Murata Type 1SC-NTNG"
+    name: "Murata Type 1SC-NTN"
     manufacturer: "Murata"
     profile_class: "device_profiles.murata_type1sc_ntng.MurataType1SCProfile"
 
@@ -151,7 +151,7 @@ text: |
 
   Modify `RemoteClientApplication` class:
 
-  1. Add device selector dropdown in GUI (Nordic Thingy:91 X / Murata Type 1SC-NTNG)
+  1. Add device selector dropdown in GUI (Nordic Thingy:91 X / Murata Type 1SC-NTN)
   2. Load device configuration on startup or device selection
   3. Instantiate device profile via factory: `self.device_profile = DeviceProfileFactory.create(device_type, config)`
   4. Replace direct AT command calls with device profile methods:

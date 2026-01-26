@@ -14,4 +14,4 @@ reviewed: null
 text: |
   Remote Client Application shall support following IoT devices
   - Thingy:91 X from Nordic Semiconductor with AT shell firmware.
-  - Murata Type 1SC-NTNG with AT shell firmware.
+  - Murata Type 1SC-NTN with AT shell firmware.

@@ -1,6 +1,6 @@
 device:
   type: "murata_type1sc_ntng"
-  name: "Murata Type 1SC-NTNG"
+  name: "Murata Type 1SC-NTN"
   manufacturer: "Murata"
   profile_class: "device_profiles.murata_type1sc_ntng.MurataType1SCProfile"
 

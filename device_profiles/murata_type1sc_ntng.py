@@ -1,4 +1,4 @@
-"""Murata Type 1SC-NTNG device profile implementation (SDD030, based on client.ttl)."""
+"""Murata Type 1SC-NTN device profile implementation (SDD030, based on client.ttl)."""
 
 import re
 import time
@@ -8,7 +8,7 @@ from .base_device import BaseDeviceProfile
 
 class MurataType1SCProfile(BaseDeviceProfile):
     """
-    Device profile for Murata Type 1SC-NTNG.
+    Device profile for Murata Type 1SC-NTN.
     
     Characteristics (per SDD030):
     - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND → DELETE
@@ -21,7 +21,7 @@ class MurataType1SCProfile(BaseDeviceProfile):
     def get_device_info(self) -> Dict[str, str]:
         """Return device metadata."""
         return {
-            'name': 'Murata Type 1SC-NTNG',
+            'name': 'Murata Type 1SC-NTN',
             'manufacturer': 'Murata',
             'firmware_type': 'AT shell',
         }
@@ -30,7 +30,7 @@ class MurataType1SCProfile(BaseDeviceProfile):
         """
         Complete NTN network initialization sequence per SDD034.
         
-        Implements complete Murata Type 1SC-NTNG NTN initialization with GNSS.
+        Implements complete Murata Type 1SC-NTN NTN initialization with GNSS.
         """
         import time
         

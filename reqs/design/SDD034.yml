@@ -4,7 +4,7 @@ doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
 header: |
-  Establish connection with NTNG cellular network with Murata Type 1SC-NTNG device Design
+  Establish connection with NTNG cellular network with Murata Type 1SC-NTN device Design
 level: 9.3.2
 links: []
 normative: true

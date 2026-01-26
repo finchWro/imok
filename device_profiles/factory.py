@@ -50,7 +50,7 @@ class DeviceProfileFactory:
             },
             {
                 'id': 'murata_type1sc_ntng',
-                'name': 'Murata Type 1SC-NTNG',
+                'name': 'Murata Type 1SC-NTN',
                 'manufacturer': 'Murata',
                 'aliases': ['murata', 'type1sc', 'murata_type1sc'],
             },

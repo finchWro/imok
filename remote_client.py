@@ -10,7 +10,7 @@ Implements Software Requirements Specification (SRS):
 Design specified in Software Design Document (SDD):
 - SDD001: Remote Client Application GUI Layout (Level 1.0)
 - SDD003: Python + Tkinter (Level 3.0)
-- SDD005: Supported IoT Devices (Level 5.0) - Nordic Thingy:91 X and Murata Type 1SC-NTNG
+- SDD005: Supported IoT Devices (Level 5.0) - Nordic Thingy:91 X and Murata Type 1SC-NTN
 - SDD006: Connection Status Design (Level 1.1) - Green/Yellow/Red indicators
 - SDD007: Connect to IoT Device via Serial (Level 7.2)
 - SDD009: Remote Client Application functions (Level 7)
@@ -499,7 +499,7 @@ class RemoteClientApplication:
                 messagebox.showerror("Connection Error", "AT handshake failed (no response)")
             return success
 
-        # Murata Type 1SC-NTNG (SDD032): send ATZ and wait for %BOOTEV:0 URC
+        # Murata Type 1SC-NTN (SDD032): send ATZ and wait for %BOOTEV:0 URC
         if "murata" in device or "type1sc" in device:
             import time
             self.log_message("sent", "[SEND] ATZ")
@@ -827,7 +827,7 @@ class RemoteClientApplication:
         Per SDD041 (Nordic Thingy:91 X):
         - Use AT#XBIND=<udp_port> to bind UDP port
         
-        Per SDD042 (Murata Type 1SC-NTNG):
+        Per SDD042 (Murata Type 1SC-NTN):
         - Socket 1 is allocated/activated to Harvest in SDD038
         - Enable notifications with AT%SOCKETDATA="ON",1
         """
@@ -855,7 +855,7 @@ class RemoteClientApplication:
         - Parse response to extract ip_addr, port, and payload
         - Display only if ip_addr="100.127.10.16"
         
-        Per SDD042 (Murata Type 1SC-NTNG):
+        Per SDD042 (Murata Type 1SC-NTN):
         - Bind receive port via AT%SOCKETCMD="ALLOCATE",1,"UDP","LISTEN","0.0.0.0",<udp_port> then ACTIVATE
         - After %SOCKETEV:1,1 notification, call AT%SOCKETDATA="RECEIVE",1,1500
         - Parse %SOCKETDATA:<socket_id>,<rlength>,<moreData>,"<rdata>","<src_ip>",<src_port>

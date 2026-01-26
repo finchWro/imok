@@ -4,7 +4,7 @@ doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
 header: |
-  Open UDP socket connection to Soracom Harvest Data with Murata Type 1SC-NTNG device Design
+  Open UDP socket connection to Soracom Harvest Data with Murata Type 1SC-NTN device Design
 level: 9.7.2
 links: []
 normative: true
