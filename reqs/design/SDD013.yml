@@ -10,27 +10,4 @@ links: []
 normative: true
 ref: ''
 reviewed: null
-text: |
-  The Remote Client Application shall establish and maintain a connection with the cellular network to facilitate communication with the Communicator Application. This includes:
-
-  - Disbable modem with AT+CFUN=0 command.
-  - Subscribe to network status notifications using AT+CEREG=5 (subscribe to a level-5 notifications) command.
-  - Subscribe to result code notifications using AT+CSCON=1 (subscribe to level-1-related unsolicited notifications) command.
-  - Set the system mode using AT%XSYSTEMMODE=1,0,1,0 (LTE-M)
-  - Turn on the modem using AT+CFUN=1.
-  - Monitor network registration status by handling unsolicited network status notifications from the modem. The application shall interpret these notifications to determine the current network status and update the connection status accordingly.
-
-  Successful establishment shall be indicated based on the network status notification +CEREG: <stat>[,[<tac>],[<ci>],[<AcT>][,[<cause_type>],[<reject_cause>][,[<Active-Time>],[<Periodic-TAU-ext>]]]] where <stat>=1 (registered, home network) or <stat>=5 (registered, roaming).
-
-  Postconditions:
-  -Established connection with cellular network i.e IoT device is registered on the cellular network (<stat>=1 (registered, home network) or <stat>=5 (registered, roaming). ).
-
-  Note:
-  <stat> values
-    0 - Not registered. User Equipment (UE) is not currently searching for an operator to register to.
-    1 - Registered, home network
-    2 - Not registered, but UE is currently trying to attach or searching an operator to register to
-    3 - Registration denied
-    4 - Unknown (for example, out of Evolved Terrestrial Radio Access Network (E-UTRAN) coverage)
-    5 - Registered, roaming
-    90 - Not registered due to Universal Integrated Circuit Card (UICC) failure
+text: ''

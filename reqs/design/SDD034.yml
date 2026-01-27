@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Establish connection with NTNG cellular network with Murata Type 1SC-NTN device Design
-level: 9.3.2
+level: 11.3.2
 links: []
 normative: true
 ref: ''
@@ -41,7 +41,8 @@ text: |
 
     example response
 
-    %IGNSSEVU:"FIX",1,"09:25:24","11/09/2024","xxxxx","-yyyyyy","113.6",1726046724000,4.6,"0.000000","B",7
+    %IGNSSEVU:"FIX",1,"09:25:24","11/09/2024","altitude","latitude","113.6",1726046724000,4.6,"0.000000","B",7
+  - "[Latitude]","[Longitude]" from %IGNSSEVU:"FIX" notification shall be saved for location reporting and display on GUI (REQ012).
   - AT+CEREG=2 - Enable network registration URCs with location info
   - Enable radio with AT+CFUN=1 command.
   - wait for satellite detection notification %NOTIFYEV: "SIB31"
@@ -61,3 +62,7 @@ text: |
     4 - Unknown (for example, out of Evolved Terrestrial Radio Access Network (E-UTRAN) coverage)
     5 - Registered, roaming
     90 - Not registered due to Universal Integrated Circuit Card (UICC) failure
+
+    %IGNSSACT format:
+    %IGNSSEVU:"Event Type",[Fix Status],"[Time]","[Date]","[Latitude]","[Longitude]","[Altitude]",[Unix Timestamp],[Accuracy/HDOP],"[Speed]","[GNSS System]",[Satellite Count]
+

@@ -182,8 +182,9 @@ class MurataType1SCProfile(BaseDeviceProfile):
             return True
     
     def _wait_for_gnss_fix(self, serial_manager, timeout: float) -> bool:
-        """Wait for GNSS fix URC (%IGNSSEVU:FIX)."""
+        """Wait for GNSS fix URC (%IGNSSEVU:FIX) and extract location (REQ012, SDD034)."""
         import time
+        import re
         start = time.time()
         while time.time() - start < timeout:
             try:
@@ -194,6 +195,15 @@ class MurataType1SCProfile(BaseDeviceProfile):
                 if "%IGNSSEVU:" in evt and "FIX" in evt:
                     if hasattr(serial_manager, 'app') and serial_manager.app:
                         serial_manager.app.log_message("sys", "[SUCCESS] GNSS fix acquired")
+                        # Extract location per SDD034
+                        try:
+                            match = re.search(r'%IGNSSEVU:\s*"[^"]+",\d+,"[^"]+","[^"]+","(-?\d+\.\d+)","(-?\d+\.\d+)"', evt)
+                            if match:
+                                lat = match.group(1)
+                                lon = match.group(2)
+                                serial_manager.app.set_location(lat, lon, source="GNSS")
+                        except Exception as e:
+                            serial_manager.app.log_message("sys", f"[WARNING] Could not extract location from GNSS fix: {e}")
                     return True
             except:
                 pass

@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   IoT device configuration sequence
-level: 8.1
+level: 9.1
 links: []
 normative: true
 ref: ''

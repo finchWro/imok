@@ -2,7 +2,7 @@ active: true
 derived: false
 header: |
   Communicator Application GUI Layout
-level: 2.0
+level: 2
 links:
 - REQ008: null
 - REQ009: null
@@ -15,9 +15,12 @@ text: |
   ## Communicator Application GUI Layout
 
   | REQ008 - Connection Status |
+  | Outline map of the world ( REQ012 - Communicator Application — Remote Client Location) |
   | --- |
   | Chat area ( Send REQ009 and received messages REQ010) |
   | REQ011 - Message Log |
 
   Note:
   - Chat area must not display log messages (REQ011).
+  - Outline map of the world shall be created using GeoPandas library with Natural Earth dataset.
+  - Remote client locations shall be displayed with full 6-decimal precision (e.g., 51.143203, 17.153213).

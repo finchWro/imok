@@ -3,8 +3,9 @@ derived: false
 doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
-header: 'Send message to Soracom Harvest Data with Thingy:91 X device Design'
-level: 9.8.1
+header: |
+  Send message to Soracom Harvest Data with Thingy:91 X device Design
+level: 11.7.1
 links: []
 normative: true
 ref: ''
@@ -16,6 +17,7 @@ text: |
   - The application shall parse the response from the IoT device to confirm that the message has been successfully sent.
   - If the message is sent successfully, the application shall log the success status.
   - Message is displayed inch GUI chat area with timestamp and indication of sending status (success/failure).
+
 
   Note:
   - Soracom Harvest Data endpoint: harvest.soracom.io

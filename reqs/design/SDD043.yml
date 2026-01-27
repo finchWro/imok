@@ -1,0 +1,19 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: |
+  The SORACOM API specifcations
+level: 9
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Soracom API specifications can be found at the following URL:
+  API reference: https://developers.soracom.io/en/api/
+  This documentation provides detailed information on how to interact with Soracom services programmatically, including endpoints, request/response formats, authentication methods, and usage examples.
+
+  API usage guidelines: https://developers.soracom.io/en/docs/tools/api-usage-guide/
+  This guide offers best practices for using the Soracom API effectively and efficiently, including rate limiting, error handling, and security considerations.

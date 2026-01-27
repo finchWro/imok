@@ -3,8 +3,9 @@ derived: false
 doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
-header: 'Remote Client Application — Receive Messages with Thingy:91 X device Design'
-level: 9.1.1
+header: |
+  Remote Client Application — Receive Messages with Thingy:91 X device Design
+level: 11.1.1
 links: []
 normative: true
 ref: ''
@@ -31,4 +32,3 @@ text: |
     The <size> value is an integer that represents the actual number of bytes received.
     The <ip_addr> value is a string that represents the IPv4 or IPv6 address of remote peer.
     The <port> value is an integer that represents the port number of the remote peer.
-

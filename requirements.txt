@@ -1,2 +1,5 @@
 pyserial>=3.5
 requests>=2.31
+geopandas>=0.14
+matplotlib>=3.8
+Pillow>=10.0

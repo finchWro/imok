@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Communicator Application — Receive Messages Design
-level: 10.5
+level: 12.4
 links: []
 normative: true
 ref: ''

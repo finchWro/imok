@@ -30,7 +30,14 @@ from typing import List, Optional, Tuple
 
 import requests
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, simpledialog
+import geopandas as gpd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import io
+from PIL import Image, ImageTk
 
 
 @dataclass
@@ -266,6 +273,12 @@ class CommunicatorApplication:
         self.selected_sim_status = tk.StringVar(value="Status: --")
         self.selected_sim_id = ""  # Store simId for sendDownlinkUdp
 
+        # Location tracking for remote clients (REQ012, SDD002)
+        self.remote_clients = {}  # {client_id: {"lat": lat_str, "lon": lon_str}}
+        self.map_canvas = None
+        self.world_gdf = None  # GeoPandas world boundaries
+        self.map_photo = None  # PhotoImage for map
+
         self.email_var = tk.StringVar()
         self.password_var = tk.StringVar()
         # Per SDD021: only request ID/password via GUI; IMSI comes from env/config
@@ -284,10 +297,12 @@ class CommunicatorApplication:
         self.root.rowconfigure(0, weight=1)
         main.columnconfigure(0, weight=1)
         main.rowconfigure(0, weight=0)
-        main.rowconfigure(1, weight=1)
-        main.rowconfigure(2, weight=1)
+        main.rowconfigure(1, weight=0)
+        main.rowconfigure(2, weight=2)
+        main.rowconfigure(3, weight=1)
 
         self._build_connection_panel(main)
+        self._build_map_panel(main)
         self._build_chat_panel(main)
         self._build_log_panel(main)
 
@@ -346,9 +361,132 @@ class CommunicatorApplication:
         self.sim_status_label = ttk.Label(status_row, textvariable=self.selected_sim_status, font=("Arial", 10, "bold"))
         self.sim_status_label.pack(side=tk.LEFT)
 
+    def _build_map_panel(self, parent: ttk.Frame):
+        """Map panel showing remote client locations (REQ012, SDD002)."""
+        frame = ttk.LabelFrame(parent, text="Remote Client Locations", padding="10")
+        frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
+
+        self.map_canvas = tk.Canvas(frame, width=600, height=150, bg="#f2f6fb", highlightthickness=1, highlightbackground="#c0c0c0")
+        self.map_canvas.grid(row=0, column=0, sticky="nsew")
+        self._draw_map_background()
+        self._update_map_display()
+
+    def _draw_map_background(self):
+        """Draw world map background using GeoPandas (SDD002)."""
+        if not self.map_canvas:
+            return
+        self.map_canvas.delete("bg")
+        w = int(self.map_canvas['width'])
+        h = int(self.map_canvas['height'])
+        
+        try:
+            # Load world boundaries from natural earth dataset
+            if self.world_gdf is None:
+                # Download Natural Earth data directly (GeoPandas 1.0+ removed built-in datasets)
+                url = "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip"
+                self.world_gdf = gpd.read_file(url)
+            
+            # Create matplotlib figure
+            dpi = 100
+            fig, ax = plt.subplots(figsize=(w/dpi, h/dpi), dpi=dpi)
+            
+            # Plot world map
+            self.world_gdf.plot(ax=ax, color='#f5f0e8', edgecolor='#8a9199', linewidth=0.5)
+            ax.set_facecolor('#d4e5f7')
+            ax.set_xlim(-180, 180)
+            ax.set_ylim(-90, 90)
+            ax.axis('off')
+            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+            
+            # Convert to image for tkinter
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0)
+            plt.close(fig)
+            buf.seek(0)
+            
+            img = Image.open(buf)
+            img = img.resize((w, h), Image.Resampling.LANCZOS)
+            self.map_photo = ImageTk.PhotoImage(img)
+            self.map_canvas.create_image(0, 0, anchor="nw", image=self.map_photo, tags="bg")
+            
+        except Exception as e:
+            # Fallback to simple rectangle if geopandas fails
+            print(f"[ERROR] GeoPandas map rendering failed: {e}")
+            import traceback
+            traceback.print_exc()
+            self.map_canvas.create_rectangle(0, 0, w, h, fill="#d4e5f7", outline="#c0c0c0", tags="bg")
+            self._draw_continents(w, h)
+
+    def _update_map_display(self):
+        """Render all remote client location markers on the map."""
+        if not self.map_canvas:
+            return
+        self._draw_map_background()
+        self.map_canvas.delete("marker")
+
+        w = int(self.map_canvas['width'])
+        h = int(self.map_canvas['height'])
+
+        for client_id, location in self.remote_clients.items():
+            try:
+                lat_f = float(location.get("lat"))
+                lon_f = float(location.get("lon"))
+            except (ValueError, TypeError):
+                continue
+
+            x = (lon_f + 180) / 360 * w
+            y = (90 - lat_f) / 180 * h
+            x = max(5, min(w - 5, x))
+            y = max(5, min(h - 5, y))
+
+            r = 6
+            self.map_canvas.create_oval(x - r, y - r, x + r, y + r, fill="#e63946", outline="#ffffff", width=2, tags="marker")
+            self.map_canvas.create_text(x, y - 12, text=f"{lat_f:.6f}, {lon_f:.6f}", fill="#0b1f33", font=("Arial", 8, "bold"), tags="marker")
+
+    def _draw_continents(self, w: int, h: int):
+        """Draw simplified continent outlines for world map (SDD002)."""
+        def lat_lon_to_xy(lat, lon):
+            x = (lon + 180) / 360 * w
+            y = (90 - lat) / 180 * h
+            return x, y
+        
+        # Simplified continent polygons (lat, lon) for equirectangular projection
+        continents = [
+            # North America
+            [(-10, -170), (15, -170), (25, -155), (50, -130), (60, -100), (70, -90), (75, -80), (70, -65), (55, -60), (48, -52), (25, -80), (10, -90), (10, -105), (-10, -110)],
+            # South America
+            [(12, -80), (10, -75), (-5, -80), (-20, -70), (-40, -73), (-55, -70), (-55, -65), (-35, -57), (-22, -43), (-5, -35), (5, -50), (10, -60)],
+            # Europe
+            [(35, -10), (40, 0), (60, 10), (70, 25), (65, 30), (55, 30), (50, 15), (45, 10), (40, 5)],
+            # Africa
+            [(37, -5), (35, 10), (32, 20), (20, 35), (15, 40), (10, 45), (-10, 42), (-20, 35), (-30, 25), (-35, 20), (-35, 30), (-15, 40), (10, 50), (20, 45), (30, 30), (37, 10)],
+            # Asia
+            [(35, 35), (40, 45), (50, 50), (60, 60), (70, 80), (75, 100), (70, 120), (60, 140), (50, 145), (40, 140), (30, 120), (25, 100), (20, 80), (25, 70), (30, 60), (35, 50)],
+            # Australia
+            [(-10, 110), (-15, 130), (-35, 140), (-40, 145), (-40, 138), (-30, 115), (-20, 113)],
+        ]
+        
+        for continent in continents:
+            points = []
+            for lat, lon in continent:
+                x, y = lat_lon_to_xy(lat, lon)
+                points.extend([x, y])
+            if len(points) >= 6:
+                self.map_canvas.create_polygon(points, fill="#f5f0e8", outline="#8a9199", width=1, tags="bg")
+
+    def _update_client_location(self, client_id: str, lat: str, lon: str):
+        """Track and display a remote client location (REQ012, SDD002)."""
+        if client_id not in self.remote_clients:
+            self.remote_clients[client_id] = {}
+        self.remote_clients[client_id]["lat"] = lat
+        self.remote_clients[client_id]["lon"] = lon
+        self._update_map_display()
+
     def _build_chat_panel(self, parent: ttk.Frame):
         frame = ttk.LabelFrame(parent, text="Chat Area", padding="10")
-        frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        frame.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(0, weight=1)
 
@@ -370,7 +508,7 @@ class CommunicatorApplication:
 
     def _build_log_panel(self, parent: ttk.Frame):
         frame = ttk.LabelFrame(parent, text="Message Log", padding="10")
-        frame.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
+        frame.grid(row=3, column=0, sticky="nsew", padx=5, pady=5)
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(1, weight=1)
 
@@ -535,6 +673,8 @@ class CommunicatorApplication:
                                 # Display received message in chat using Harvest timestamp (SDD029)
                                 self._append_chat("recv", f"[RECV] {msg.text}", ts=msg.timestamp)
                                 self.log_message("recv", f"Harvest at {msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+                                # Try to parse location from message (REQ012)
+                                self._maybe_extract_location(msg.text)
                         else:
                             # Single line for empty polls
                             self.log_message("sys", "[HARVEST] Fetched 0 message(s)")
@@ -551,6 +691,21 @@ class CommunicatorApplication:
         threading.Thread(target=worker, daemon=True).start()
 
     # UI helpers -------------------------------------------------------
+    def _maybe_extract_location(self, message_text: str):
+        """Extract LOCATION payload from message and update map (REQ012, SDD002, SDD047)."""
+        try:
+            import re
+            # Match ["LOCATION", "lat", "lon"] format
+            match = re.search(r'\["LOCATION",\s*"(-?\d+\.?\d*)",\s*"(-?\d+\.?\d*)"\]', message_text)
+            if match:
+                lat, lon = match.group(1), match.group(2)
+                # Use timestamp as client ID; in real scenario could use IMSI or device ID
+                client_id = f"client_{int(time.time())}"
+                self._update_client_location(client_id, lat, lon)
+                self.log_message("sys", f"[LOCATION] Updated {client_id}: lat={lat}, lon={lon}")
+        except Exception:
+            pass
+
     def _append_chat(self, tag: str, message: str, ts: Optional[datetime] = None):
         ts_str = (ts or datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
         entry = f"[{ts_str}] {message}\n"

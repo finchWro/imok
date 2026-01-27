@@ -1,0 +1,14 @@
+active: true
+derived: false
+doc:
+  name: Software Design Document
+  title: Software Design Document for _IMOK_
+header: 'Location message format'
+level: 10
+links: []
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The Remote Client Application shall send its geographical location to the Communicator Application in a message formatted as follows:
+  ["LOCATION", "<latitude>", "<longitude>"]

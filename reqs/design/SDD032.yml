@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Connect to Murata Type 1SC-NTN device Design
-level: 9.2.2
+level: 11.2.2
 links: []
 normative: true
 ref: ''

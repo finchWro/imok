@@ -27,10 +27,11 @@ Design specified in Software Design Document (SDD):
 """
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, simpledialog
 from datetime import datetime
 import threading
 import queue
+import re
 import serial
 import serial.tools.list_ports
 
@@ -216,9 +217,13 @@ class RemoteClientApplication:
         self.rssi_threshold = -110  # dBm threshold for acceptable signal
         self.rsrp_threshold = -130  # dBm threshold for acceptable signal
 
+        # Location reporting (REQ012, SDD002, SDD034, SDD040, SDD047)
+        self.location = {"lat": "--", "lon": "--"}
+        self.location_sent = False
+
         # UDP receive configuration (SDD026, SDD027, SDD028)
         self.udp_port = 55555  # SDD026: Port for UDP communications
-        self.udp_buffer_size = 1500  # SDD042: read up to 1500 bytes
+        self.udp_buffer_size = 256  # SDD028: UDP buffer size is 256 bytes
         self.udp_bound = False
         
         # Variables
@@ -299,9 +304,20 @@ class RemoteClientApplication:
         self.rsrp_label = ttk.Label(signal_row, text="-- dBm", font=("Arial", 9, "bold"))
         self.rsrp_label.pack(side=tk.LEFT, padx=2)
         
+        # Location display (REQ012 / SDD034 - auto-populated from GNSS)
+        location_row = ttk.Frame(frame)
+        location_row.grid(row=1, column=0, columnspan=3, sticky='ew', pady=5)
+
+        ttk.Label(location_row, text="Location:").pack(side=tk.LEFT, padx=5)
+        self.location_var = tk.StringVar(value="-- , --")
+        self.location_label = ttk.Label(location_row, textvariable=self.location_var, font=("Arial", 9, "bold"))
+        self.location_label.pack(side=tk.LEFT, padx=5)
+
+        self.update_location_display()
+
         # Device Selection (SDD030)
         device_frame = ttk.LabelFrame(frame, text="Device Configuration", padding="5")
-        device_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=5)
+        device_frame.grid(row=2, column=0, columnspan=2, sticky='ew', pady=5)
         device_frame.columnconfigure(1, weight=1)
         
         ttk.Label(device_frame, text="Device:").grid(row=0, column=0, sticky='w', padx=5)
@@ -314,7 +330,7 @@ class RemoteClientApplication:
         
         # Serial Configuration
         config_frame = ttk.LabelFrame(frame, text="Serial Configuration", padding="5")
-        config_frame.grid(row=2, column=0, columnspan=2, sticky='ew', pady=5)
+        config_frame.grid(row=3, column=0, columnspan=2, sticky='ew', pady=5)
         config_frame.columnconfigure(1, weight=1)
         
         ttk.Label(config_frame, text="Port:").grid(row=0, column=0, sticky='w', padx=5)
@@ -331,7 +347,7 @@ class RemoteClientApplication:
         
         # Buttons
         btn_frame = ttk.Frame(frame)
-        btn_frame.grid(row=3, column=0, columnspan=2, sticky='w', pady=10, padx=5)
+        btn_frame.grid(row=4, column=0, columnspan=2, sticky='w', pady=10, padx=5)
         
         self.connect_btn = ttk.Button(btn_frame, text="Connect", command=self.connect)
         self.connect_btn.pack(side=tk.LEFT, padx=5)
@@ -627,15 +643,32 @@ class RemoteClientApplication:
         self.log_message("sys", "URC monitoring active - listening for +CEREG and other URCs (SDD013)")
     
     def handle_urc(self, message):
-        """Handle unsolicited result codes from modem (SDD013, SDD015, SDD018).
+        """Handle unsolicited result codes from modem (SDD013, SDD015, SDD018, SDD044, SDD045).
         
         This interprets URCs to determine current network status and updates connection status.
         Common URCs:
         - +CEREG: Network registration status
         - +CSCON: Connection state notification
-        - %CESQ: RSRP notifications (SDD015)
+        - %CESQ: RSRP notifications (SDD015/SDD044)
+        - %MEAS: RSRP notifications (SDD045)
         - +CMT, +CDS, etc: Message/data URCs
         """
+        self._maybe_update_location_from_message(message)
+        
+        if message.startswith("%IGNSSEVU"):
+            # Handle GNSS fix notification (REQ012, SDD034) - extract lat/lon
+            self.log_message("sys", f"[URC] GNSS fix: {message}")
+            try:
+                # Format: %IGNSSEVU: "FIX",1,"13:51:02","27/01/2026","51.143392","17.153273","32.1",1769521862000,9.5,"0.000000","B",4
+                # Latitude is field 5, longitude is field 6 (0-indexed: 4, 5)
+                match = re.search(r'%IGNSSEVU:\s*"[^"]+",\d+,"[^"]+","[^"]+","(-?\d+\.\d+)","(-?\d+\.\d+)"', message)
+                if match:
+                    lat = match.group(1)
+                    lon = match.group(2)
+                    self.set_location(lat, lon, source="GNSS")
+            except Exception as e:
+                self.log_message("sys", f"[ERROR] Failed to parse GNSS location: {e}")
+        
         if message.startswith("+CEREG"):
             # Network registration status per SDD013
             try:
@@ -714,6 +747,21 @@ class RemoteClientApplication:
                             self.log_message("sys", f"[ALERT] RSRP below threshold ({rsrp_dbm} < {self.rsrp_threshold} dBm)")
             except (ValueError, IndexError):
                 pass
+        elif message.startswith("%MEAS") or message.startswith("%%MEAS"):
+            # Handle Murata RSRP notification (SDD045)
+            self.log_message("sys", f"[URC] Signal quality: {message}")
+            try:
+                match = re.search(r"RSRP\s*=\s*(-?\d+)", message)
+                if match:
+                    rsrp_dbm = int(match.group(1))
+                    if rsrp_dbm != 255:  # 255 means not known or not detectable
+                        self.signal_quality["rsrp"] = rsrp_dbm
+                        self.log_message("sys", f"[SIGNAL] RSRP: {rsrp_dbm} dBm")
+                        self.update_signal_quality_display()
+                        if rsrp_dbm < self.rsrp_threshold:
+                            self.log_message("sys", f"[ALERT] RSRP below threshold ({rsrp_dbm} < {self.rsrp_threshold} dBm)")
+            except Exception:
+                pass
         elif message.startswith("%PINGCMD"):
             # Capture ping notification for SDD036 to avoid race with device profile waits
             self.last_ping_notification = message
@@ -785,20 +833,19 @@ class RemoteClientApplication:
         return False
     
     def monitor_signal_quality(self):
-        """Monitor signal quality metrics (SDD015).
-        
-        Subscribe to RSRP notifications using AT%CESQ=1 per SDD015.
-        Notifications received as URCs in format: %CESQ: <rsrp>,<rsrq>,<snr>,<rscp>
-        """
-        self.log_message("sys", "Starting signal quality monitoring (SDD015)...")
-        
-        # Subscribe to RSRP notifications (SDD015)
-        success, response = self.serial.send_command("AT%CESQ=1")
+        """Monitor signal quality metrics (SDD015/SDD044/SDD045)."""
+        self.log_message("sys", "Starting signal quality monitoring (SDD015/SDD044/SDD045)...")
+
+        is_murata = "murata" in self.device_type.get().lower()
+        cmd = 'AT%MEAS="8"' if is_murata else "AT%CESQ=1"
+        success, response = self.serial.send_command(cmd)
+
         if success:
-            self.log_message("sent", "[SEND] AT%CESQ=1 - Subscribe to RSRP notifications")
+            self.log_message("sent", f"[SEND] {cmd} - Subscribe to RSRP notifications")
             if response:
                 self.log_message("recv", f"[RECV] {response}")
-            self.log_message("sys", "Subscribed to RSRP notifications - will receive %CESQ URCs")
+            device_label = "Murata Type 1SC-NTN" if is_murata else "Nordic Thingy:91 X"
+            self.log_message("sys", f"Subscribed to RSRP notifications ({device_label})")
         else:
             self.log_message("sys", "Failed to subscribe to RSRP notifications")
     
@@ -875,18 +922,62 @@ class RemoteClientApplication:
         if result:
             ip_addr, port, payload = result
             self.log_message("sys", f"[SUCCESS] Received UDP from {ip_addr}:{port} (SDD041/SDD042)")
+            self.log_message("recv", f"[RECV] {payload}")
             self.display_chat_message("recv", f"[RECV] {payload}")
         else:
             # No message received - this is normal for polling
             pass
     
     def update_signal_quality_display(self):
-        """Update GUI signal quality display (SDD015 - RSRP only)."""
+        """Update GUI signal quality display (SDD015/SDD044/SDD045 - RSRP only)."""
         try:
             rsrp_text = f"{self.signal_quality['rsrp']} dBm" if self.signal_quality["rsrp"] != 0 else "-- dBm"
             self.rsrp_label.config(text=rsrp_text)
         except:
             pass
+
+    def _maybe_update_location_from_message(self, message: str):
+        """Extract latitude/longitude from URCs or data strings when present (REQ012)."""
+        try:
+            # Match two decimal numbers wrapped in quotes (e.g., "51.123","17.456")
+            match = re.search(r'"(-?\d{1,3}\.\d+)",\s*"(-?\d{1,3}\.\d+)"', message)
+            if not match:
+                # Also handle key/value JSON-like patterns lat/lng
+                match = re.search(r'lat"\s*[:=]\s*"?(-?\d+\.\d+)"?.*lng"\s*[:=]\s*"?(-?\d+\.\d+)"?', message)
+            if match:
+                lat, lon = match.group(1), match.group(2)
+                self.set_location(lat, lon, source="URC")
+        except Exception:
+            pass
+
+    def update_location_display(self):
+        try:
+            self.location_var.set(f"{self.location['lat']} , {self.location['lon']}")
+        except Exception:
+            pass
+
+    def set_location(self, lat: str, lon: str, source: str = "manual"):
+        """Update stored location and refresh display (REQ012)."""
+        self.location["lat"] = lat
+        self.location["lon"] = lon
+        self.location_sent = False  # force re-send on next message
+        self.update_location_display()
+        self.log_message("sys", f"[INFO] Location updated ({lat}, {lon}) via {source}")
+
+    def prompt_set_location(self):
+        """Prompt user to enter latitude/longitude manually (REQ012 fallback)."""
+        lat = simpledialog.askstring("Set Latitude", "Enter latitude (e.g., 51.143325)", parent=self.root)
+        if lat is None:
+            return
+        lon = simpledialog.askstring("Set Longitude", "Enter longitude (e.g., 17.153323)", parent=self.root)
+        if lon is None:
+            return
+        lat = lat.strip()
+        lon = lon.strip()
+        if not lat or not lon:
+            messagebox.showerror("Invalid Location", "Latitude and longitude cannot be empty.")
+            return
+        self.set_location(lat, lon, source="manual")
     
     def disconnect(self):
         """Disconnect from device (SDD006)."""
@@ -896,6 +987,7 @@ class RemoteClientApplication:
         self.urc_monitoring_active = False
         self.network_registered = False
         self.udp_bound = False
+        self.location_sent = False
         self.status_label.config(text="Status: Disconnected")
         self.update_status()
         self.connect_btn.config(state='normal')
@@ -937,16 +1029,49 @@ class RemoteClientApplication:
         if not data:
             self.log_message("sys", "[ERROR] Empty message - cannot send to Harvest Data")
             return False
+
+        # Ensure location message is sent once before any other payload (REQ012/SDD040/SDD047)
+        if not self.ensure_location_sent():
+            return False
         
         # Use device profile to send per SDD039/SDD040
         success = self.device_profile.send_to_harvest(self.serial, data)
         
         if success:
             self.log_message("sys", "[SUCCESS] Sent message to Soracom Harvest Data (SDD019)")
+            self.log_message("sent", f"[SEND] {data}")
             self.display_chat_message("sent", f"[SEND] {data}")
             return True
         else:
             self.log_message("sys", "[ERROR] Failed to send message to Soracom Harvest Data (SDD019)")
+            return False
+
+    def ensure_location_sent(self):
+        """Send location payload once after connect, before first data message (REQ012/SDD040/SDD047)."""
+        if self.location_sent:
+            return True
+
+        lat = self.location.get("lat")
+        lon = self.location.get("lon")
+
+        if not lat or not lon or lat == "--" or lon == "--":
+            messagebox.showwarning(
+                "Location Required",
+                "Set latitude/longitude before sending messages (REQ012). Use 'Set Location' or wait for device URC with coordinates."
+            )
+            return False
+
+        payload = f'["LOCATION","{lat}","{lon}"]'
+        success = self.device_profile.send_to_harvest(self.serial, payload)
+
+        if success:
+            self.location_sent = True
+            self.log_message("sys", "[SUCCESS] Sent location message to Soracom Harvest Data (REQ012/SDD047)")
+            self.log_message("sent", f"[SEND] {payload}")
+            self.display_chat_message("sent", f"[SEND] {payload}")
+            return True
+        else:
+            self.log_message("sys", "[ERROR] Failed to send location message (REQ012/SDD047)")
             return False
     
     def log_message(self, tag, msg):

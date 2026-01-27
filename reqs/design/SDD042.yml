@@ -3,8 +3,9 @@ derived: false
 doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
-header: 'Remote Client Application — Receive Messages with Murata Type 1SC-NTN device Design'
-level: 9.1.2
+header: |
+  Remote Client Application — Receive Messages with Murata Type 1SC-NTN device Design
+level: 11.1.2
 links: []
 normative: true
 ref: ''
@@ -41,12 +42,10 @@ text: |
       <socket_id> : Socket ID on which the command event occurred.
 
   Example communications:
-  1) If data is received successfully the module will return the following reply to indicate arriving data session_id=1, socket_id=1: 
+  1) If data is received successfully the module will return the following reply to indicate arriving data session_id=1, socket_id=1:
   %SOCKETEV:1,1
-  2) Read the arriving data: 
+  2) Read the arriving data:
   AT%SOCKETDATA="RECEIVE",1,1500
-  3) Expected response: 
+  3) Expected response:
   %SOCKETDATA:1,3,0,"323031","100.127.69.42",23080
   This corresponds to ASCII 201, which is the received message.
-
-

@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Generating an SORACOM API Key and Token with an ID and Password
-level: 10.4
+level: 12.3
 links: []
 normative: true
 ref: ''

@@ -17,5 +17,8 @@ text: |
   - If the message is sent successfully, the application shall log the success status.
   - Message is displayed inch GUI chat area with timestamp and indication of sending status (success/failure).
 
+  Exception:
+  - Before first message is sent after connection to IoT device, Remote Client Application shall send location message to Soracom Harvest Data in format defined in SDD047.
+
   Note:
   - Example command: AT%SOCKETDATA="SEND",1,13,"48656C6C6F2C20776F726C6421"

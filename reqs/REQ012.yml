@@ -1,0 +1,19 @@
+active: true
+derived: false
+doc:
+  name: Requirements
+  title: Requirements for _IMOK_
+header: |
+  Communicator Application — Remote Client Location
+level: 3.5
+links:
+- SDD002: null
+- SDD034: null
+- SDD040: null
+- SDD047: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  Supported devices:
+    - Murata Type 1SC NTN module

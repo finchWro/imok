@@ -4,7 +4,7 @@ doc:
   name: Software Design Document
   title: Software Design Document for _IMOK_
 header: |
-  REQ008 - Connection Status indication in the Communicator Application GUI
+  Connection Status indication in the Communicator Application GUI
 level: 10.3
 links: []
 normative: true

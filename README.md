@@ -86,6 +86,9 @@ The Device Profile Pattern allows easy addition of new IoT device types by imple
 ```
 pyserial>=3.5
 requests>=2.31
+geopandas>=0.14
+matplotlib>=3.8
+Pillow>=10.0
 ```
 
 ## Installation
@@ -135,7 +138,8 @@ python remote_client.py
 - **Device Selection**: Choose between Nordic Thingy:91 X and Murata Type 1SC-NTN
 - **Connection Status**: Green (connected + network registered), Yellow (connecting/offline), Red (disconnected)
 - **Serial Configuration**: Select COM port and baud rate
-- **Signal Quality**: Real-time RSRP display (dBm)
+- **Signal Quality**: Real-time RSRP display (dBm) - device-specific monitoring (SDD044/SDD045)
+- **Location Tracking**: Automatic GNSS coordinate extraction and display (REQ012/SDD034)
 - **Send Messages**: Input text and click Send to transmit to Soracom Harvest Data
 - **Receive Messages**: Automatically receives UDP downlink from Communicator (port 55555)
 - **Message Log**: Filterable log (All/Sent/Received/System) with timestamps and detailed AT command traces
@@ -146,12 +150,14 @@ python remote_client.py
 1. Select device type (Nordic Thingy:91 X for LTE-M or Murata Type 1SC-NTN for NTN)
 2. Select COM port and appropriate baud rate (9600 for Nordic, 115200 for Murata)
 3. Click **Connect** - initiates cellular network registration
-   - **Murata NTN**: Waits for GNSS fix before network registration (crucial for satellite connectivity)
+   - **Murata NTN**: Waits for GNSS fix, extracts location coordinates, then registers on satellite network
    - **Nordic LTE-M**: Proceeds directly to network registration
-4. Application waits for network registration (`+CEREG 1/5` or `CEREG: 5`) per SDD016 requirements
+4. **Location Auto-Population**: Coordinates automatically extracted from GNSS fix notification (`%IGNSSEVU`)
+5. Application waits for network registration (`+CEREG 1/5` or `CEREG: 5`) per SDD016 requirements
    - **Timeout**: 60s for terrestrial LTE-M, 120s for NTN satellite
-5. Only after successful registration: PDP context activation, UDP socket opening, and port binding
-6. Send messages to Harvest Data or receive downlink from Communicator
+6. Only after successful registration: PDP context activation, UDP socket opening, and port binding
+7. **First Message**: Location payload automatically sent before first user message (REQ012/SDD047)
+8. Send messages to Harvest Data or receive downlink from Communicator
 
 ### Running the Communicator Application
 
@@ -161,8 +167,10 @@ python communicator_app.py
 
 **Features:**
 - **Connection Status**: Authenticate with Soracom API using email/password
-- **SIM Inventory**: Lists all SIMs with online/offline session status
-- **Session Indicator**: Green (online), Yellow (offline), Red (disconnected)
+- **World Map**: GeoPandas-rendered map showing remote client locations with 6-decimal precision coordinates (REQ012/SDD002)
+- **Send Messages**: Select online SIM, input text, click Send for UDP downlink (port 55555)
+- **Receive Messages**: Polls Harvest Data API every 5 seconds for new messages
+- **Location Tracking**: Automatically extracts and displays location from received `["LOCATION","lat","lon"]` messages (SDD047)
 - **Send Messages**: Select online SIM, input text, click Send for UDP downlink (port 55555)
 - **Receive Messages**: Polls Harvest Data API every 5 seconds for new messages
 - **Message Log**: Filterable log with timestamps and error details (Code/Description)
@@ -170,8 +178,9 @@ python communicator_app.py
 
 **Workflow:**
 1. Enter Soracom email and password
-2. Click **Connect** - authenticates and loads SIM inventory
-3. Select a SIM from the list (session status shows online/offline)
+2. View remote client locations on world map (automatically updated from location messages)
+5. Send messages via UDP downlink (requires SIM online)
+6. Select a SIM from the list (session status shows online/offline)
 4. Send messages via UDP downlink (requires SIM online)
 5. Received messages from Harvest Data appear automatically in chat
 
@@ -197,11 +206,11 @@ python communicator_app.py
 
 **Nordic Thingy:91 X (LTE-M):**
 - `AT+CFUN=1` - Set modem to full functionality
-- `AT+CEREG=5` - Enable network registration URCs
-- `AT%XSYSTEMMODE=1,0,1,0` - Set LTE-M mode
-- `AT+CGDCONT=1,"IP","soracom.io"` - Configure PDP context for Soracom APN
-- `AT%CESQ=1` - Subscribe to signal quality (RSRP) notifications
+- `AT+CEREG=5` - Enable network registration URCs (SDD044)
 - `AT#XSOCKET=1,2,0` - Open UDP socket
+- `AT#XBIND=55555` - Bind UDP port 55555 for downlink receive
+- `AT#XSENDTO="harvest.soracom.io",8514,"<data>"` - Send to Harvest Data
+- `AT#XRECVFROM=256` - Receive UDP data (256 byte buffer per SDD028
 - `AT#XBIND=55555` - Bind UDP port 55555 for downlink receive
 - `AT#XSENDTO="harvest.soracom.io",8514,"<data>"` - Send to Harvest Data
 - `AT#XRECVFROM=1500` - Receive UDP data (1500 byte buffer)
@@ -212,16 +221,17 @@ python communicator_app.py
 - `AT+CSIM=52,"80C2000015D613190103820282811B0100130799F08900010001"` - Switch to NTN SIM plan
 - `AT%RATIMGSEL=2` - Select NTN RAT image
 - `AT%RATACT="NBNTN","1"` - Activate NB-IoT-NTN RAT
-- `AT%SETCFG="BAND","256"` - Lock to Europe S band
-- `AT%IGNSSACT=1` - Enable iGNSS (wait for fix before network registration)
+- `AT%SETCFG="BAND","256"` - Lock to Europe S , extract location from `%IGNSSEVU` per SDD034)
+- `AT%MEAS="8"` - Subscribe to signal quality (RSRP) notifications (SDD045)
 - `AT+CEREG=2` - Enable network registration URCs with location
 - `AT+CGDCONT=1,"IP","soracom.io"` - Configure PDP context
 - `AT%PINGCMD=0,"100.127.100.127",1,50,30` - Ping Soracom server (verify PDP context)
 - `AT%SOCKETEV=0,1` - Enable socket events
 - `AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514` - Allocate socket to Harvest
 - `AT%SOCKETCMD="ACTIVATE",1` - Activate socket
-- `AT%SOCKETDATA="SEND",1,<size>,"<hex_data>"` - Send HEX-encoded data
+- `AT%SOCKETDATA="SEND",1,<size>,"<hex_data>"` - Send HEX-encoded data (includes location message SDD047)
 - `AT%SOCKETCMD="ALLOCATE",1,"UDP","LISTEN","0.0.0.0",,55555` - Allocate LISTEN socket for downlink
+- `AT%SOCKETDATA="RECEIVE",2,256` - Receive UDP data on socket 2 (256 byte buffer per SDD028)llocate LISTEN socket for downlink
 - `AT%SOCKETDATA="RECEIVE",2,1500` - Receive UDP data on socket 2
 
 ### Design Documents
@@ -229,11 +239,13 @@ python communicator_app.py
 The system implements requirements defined in Doorstop documents:
 
 **Requirements (REQ):**
-- REQ002-REQ007: Remote Client Application specifications
+- REQ002-REQ007: Remote Client Application specification
+- REQ012: Remote Client Location Tracking (new)s
 - REQ008-REQ011: Communicator Application specifications
 
 **Design Specifications (SDD):**
 - SDD001-SDD019: Remote Client detailed design
+- SDD043-SDD047: API specifications, signal monitoring, and location reporting (new)
 - SDD020-SDD029: Communicator detailed design
 - SDD030-SDD042: Device-specific implementations (Nordic LTE-M, Murata NTN)
 
@@ -254,7 +266,8 @@ View in browser: `all/index.html`
 | **REQ005** | Send Messages | Send to Harvest Data via AT#XSENDTO |
 | **REQ006** | Receive Messages | UDP downlink via AT#XRECVFROM |
 | **REQ007** | Message Log | Filterable log with timestamps |
-| **REQ008** | Communicator GUI | `communicator_app.py` - Tkinter 3-row layout |
+| **REQ008** | Communicator GUI | `communicator_app.py` - Tki
+| **REQ012** | Remote Client Location | GeoPandas map with GNSS coordinates |nter 3-row layout |
 | **REQ009** | Send Messages | UDP downlink via Soracom API |
 | **REQ010** | Receive Messages | Poll Harvest Data API every 5s |
 | **REQ011** | Message Log | Filterable log with timestamps |
@@ -306,11 +319,20 @@ View in browser: `all/index.html`
 ```
 imok/
 ├── remote_client.py         # Remote Client Application
-├── communicator_app.py      # Communicator Application
-├── requirements.txt         # Python dependencies
-├── README.md               # This file
-├── .gitignore              # Git ignore patterns
+├── device_profiles/        # Device Profile Pattern (SDD030)
+│   ├── __init__.py
+│   ├── base_device.py      # Abstract base class
+│   ├── factory.py          # Device profile factory
+│   ├── nordic_thingy91x.py # Nordic Thingy:91 X implementation
+│   └── murata_type1sc_ntng.py # Murata Type 1SC-NTN implementation
+├── config/                 # Device configuration files
+│   ├── murata_type1sc_ntng.yaml
+│   └── nordic_thingy91x.yaml
 ├── reqs/                   # Doorstop requirements
+│   ├── REQ001.yml - REQ012.yml
+│   └── design/             # Design specifications
+│       ├── SDD001.yml - SDD029.yml
+│       └── SDD030.yml - SDD047.yml  # Device-specific & location tracking
 │   ├── REQ001.yml - REQ011.yml
 │   └── design/             # Design specifications
 │       ├── SDD001.yml - SDD029.yml
