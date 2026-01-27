@@ -42,3 +42,6 @@ all/
 # Teraterm scripts (device-specific, not for version control)
 client.ttl
 *.ttl
+
+# AT protocol test files
+at_protocol.py
