@@ -1,7 +1,7 @@
 active: true
 derived: false
 header: |
-	HLT004 - Message Log Entries
+  HLT004 - Message Log Entries
 level: 1.3
 links:
 - REQ007: null
@@ -9,23 +9,23 @@ normative: true
 ref: ''
 reviewed: null
 text: |
-	Objective:
-	Verify REQ007 by using the application-generated Message Log to compare observed send and receive events with recorded log entries and timestamps.
+  Objective:
+  Verify REQ007 by using the application-generated Message Log to compare observed send and receive events with recorded log entries and timestamps.
 
-	Preconditions:
-	- Remote Client Application is connected to the IoT device and cellular network.
-	- Communicator Application is connected and able to send/receive messages.
+  Preconditions:
+  - Remote Client Application is connected to the IoT device and cellular network.
+  - Communicator Application is connected and able to send/receive messages.
 
-	Test Steps:
-	1. Send a unique test message from the Remote Client Application (e.g., "HLT007-SEND-001").
-	2. Send a unique test message from the Communicator Application to the Remote Client Application (e.g., "HLT007-RECV-001").
-	3. Open the application-generated Message Log and locate the most recent "[SEND]" and "[RECV]" entries for comparison.
+  Test Steps:
+  1. Send a unique test message from the Remote Client Application (e.g., "HLT007-SEND-001").
+  2. Send a unique test message from the Communicator Application to the Remote Client Application (e.g., "HLT007-RECV-001").
+  3. Open the application-generated Message Log and locate the most recent "[SEND]" and "[RECV]" entries for comparison.
 
-	Expected Results:
-	- The Message Log contains a "[SEND]" entry with the exact send payload and a timestamp.
-	- The Message Log contains a "[RECV]" entry with the exact receive payload and a timestamp.
-	- Pass/Fail: The test passes when both observed events match the corresponding Message Log entries; otherwise it fails.
+  Expected Results:
+  - The Message Log contains a "[SEND]" entry with the exact send payload and a timestamp.
+  - The Message Log contains a "[RECV]" entry with the exact receive payload and a timestamp.
+  - Pass/Fail: The test passes when both observed events match the corresponding Message Log entries; otherwise it fails.
 
-	Actual Log (record during test execution):
-	- [YYYY-MM-DD HH:MM:SS] [SEND] <paste exact log line from the Message Log>
-	- [YYYY-MM-DD HH:MM:SS] [RECV] <paste exact log line from the Message Log>
+  Actual Log (record during test execution):
+  - [YYYY-MM-DD HH:MM:SS] [SEND] <paste exact log line from the Message Log>
+  - [YYYY-MM-DD HH:MM:SS] [RECV] <paste exact log line from the Message Log>
