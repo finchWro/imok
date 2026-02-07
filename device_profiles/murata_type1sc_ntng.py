@@ -139,9 +139,36 @@ class MurataType1SCProfile(BaseDeviceProfile):
                 serial_manager.app.log_message("recv", f"[RECV] {resp}")
             if not success:
                 return False
+
+        # Wait for satellite detection notification per SDD034
+        if hasattr(serial_manager, 'app') and serial_manager.app:
+            serial_manager.app.log_message("sys", "[INFO] Waiting for %NOTIFYEV: \"SIB31\"...")
+
+        if not self._wait_for_sib31(serial_manager, timeout=120.0):
+            if hasattr(serial_manager, 'app') and serial_manager.app:
+                serial_manager.app.log_message("sys", "[ERROR] Timeout waiting for %NOTIFYEV: \"SIB31\"")
+            return False
         
         # Network initialization complete
         return True
+
+    def _wait_for_sib31(self, serial_manager, timeout: float) -> bool:
+        """Wait for %NOTIFYEV: "SIB31" satellite detection (SDD034)."""
+        import time
+
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                evt = serial_manager.event_queue.get(timeout=1.0)
+                if hasattr(serial_manager, 'app') and serial_manager.app:
+                    serial_manager.app.log_message("recv", f"[RECV] {evt}")
+                if "%NOTIFYEV" in evt and "SIB31" in evt:
+                    if hasattr(serial_manager, 'app') and serial_manager.app:
+                        serial_manager.app.log_message("sys", "[SUCCESS] Satellite detection received (%NOTIFYEV: \"SIB31\")")
+                    return True
+            except Exception:
+                pass
+        return False
     
     def _send_and_wait_boot(self, serial_manager, cmd: str) -> bool:
         """Send command and wait for %BOOTEV:0 URC."""
@@ -154,8 +181,15 @@ class MurataType1SCProfile(BaseDeviceProfile):
                     serial_manager.app.log_message("sys", f"[ERROR] Failed to send {cmd}: {e}")
                 return False
             
+            # Drain any stale events so we only match the new boot notification
+            try:
+                while True:
+                    serial_manager.event_queue.get_nowait()
+            except Exception:
+                pass
+
             start = time.time()
-            timeout = 15.0
+            timeout = 40.0
             got_boot = False
             while time.time() - start < timeout:
                 try:
@@ -407,15 +441,35 @@ class MurataType1SCProfile(BaseDeviceProfile):
             while time.time() - start_wait < timeout_wait:
                 app = getattr(serial_manager, 'app', None)
                 if app and app.last_ping_notification and "%PINGCMD" in app.last_ping_notification:
-                    app.log_message("sys", f"[VERIFY] Ping successful: {app.last_ping_notification}")
-                    return True
+                    ping_line = str(app.last_ping_notification)
+                    app.last_ping_notification = None
+
+                    # Expected format: %PINGCMD:<ip_type>,<dst_ip>,<ttl>,<rtt>
+                    match = re.search(r'%PINGCMD:(\d+),"?([0-9.]+)"?,(\d+),(\d+)', ping_line)
+                    if match:
+                        ip_type = match.group(1)
+                        dst_ip = match.group(2)
+                        ttl = match.group(3)
+                        rtt = match.group(4)
+                        if dst_ip == "100.127.100.127":
+                            app.log_message(
+                                "sys",
+                                f"[VERIFY] Ping successful: %PINGCMD:{ip_type},{dst_ip},{ttl},{rtt} (SDD036)",
+                            )
+                            return True
+                        app.log_message(
+                            "sys",
+                            f"[WARNING] Ping response destination mismatch: {ping_line}",
+                        )
+                    else:
+                        app.log_message("sys", f"[WARNING] Unrecognized %PINGCMD format: {ping_line}")
                 time.sleep(0.2)
 
             # Timeout waiting for ping response
             app = getattr(serial_manager, 'app', None)
             if app:
                 elapsed = time.time() - start_wait
-                app.log_message("sys", f"[ERROR] Ping notification not received within {elapsed:.1f}s (SDD014)")
+                app.log_message("sys", f"[ERROR] Ping notification not received within {elapsed:.1f}s (SDD036)")
             return False
         except Exception as e:
             app = getattr(serial_manager, 'app', None)

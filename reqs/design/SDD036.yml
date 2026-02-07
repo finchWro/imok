@@ -22,6 +22,7 @@ text: |
   Postconditions:
   
   - The Remote Client Application shall confirm that the PDP context is successfully configured by verifying the %PINGCMD response from the modem.
+  - Sending messages to the Communicator Application shall be enabled after successful PDP context configuration, allowing for data communication over the cellular network.
 
   Note:
   %PingCMD response format:

@@ -225,6 +225,9 @@ class RemoteClientApplication:
         self.udp_port = 55555  # SDD026: Port for UDP communications
         self.udp_buffer_size = 256  # SDD028: UDP buffer size is 256 bytes
         self.udp_bound = False
+
+        # PDP context readiness (SDD036)
+        self.pdp_ready = False
         
         # Variables
         self.selected_port = tk.StringVar()
@@ -385,6 +388,7 @@ class RemoteClientApplication:
         
         self.send_btn = ttk.Button(input_frame, text="Send", command=self.send_message)
         self.send_btn.grid(row=0, column=1, sticky='n')
+        self.send_btn.config(state='disabled')
     
     def build_send_panel(self, parent):
         """DEPRECATED - Use build_chat_panel instead."""
@@ -442,6 +446,26 @@ class RemoteClientApplication:
             color = "red"
         self.status_canvas.delete("all")
         self.status_canvas.create_oval(5, 5, 25, 25, fill=color, outline="black")
+
+    def update_status_label(self):
+        """Update status text for device and cellular network (SDD034)."""
+        if self.connection_state == "connecting":
+            device_state = "Connecting"
+        elif self.is_connected:
+            device_state = "Connected"
+        else:
+            device_state = "Disconnected"
+
+        if self.network_registered:
+            network_state = "Registered"
+        elif self.is_connected and self.urc_monitoring_active:
+            network_state = "Registering"
+        else:
+            network_state = "Disconnected"
+
+        self.status_label.config(
+            text=f"Status: Device {device_state} | Network {network_state}"
+        )
     
     def refresh_ports(self, combo):
         """Refresh available ports."""
@@ -459,6 +483,7 @@ class RemoteClientApplication:
         """
         # reset registration tracking on each connect attempt
         self.network_registered = False
+        self.pdp_ready = False
 
         if not self.selected_port.get() or "No ports" in self.selected_port.get():
             messagebox.showerror("Error", "Select a valid port")
@@ -469,9 +494,10 @@ class RemoteClientApplication:
         
         # Set connecting state (SDD006)
         self.connection_state = "connecting"
-        self.status_label.config(text="Status: Connecting...")
+        self.update_status_label()
         self.update_status()
         self.connect_btn.config(state='disabled')
+        self.send_btn.config(state='disabled')
         
         success, msg = self.serial.connect(port, baud)
         if success:
@@ -485,10 +511,10 @@ class RemoteClientApplication:
             
             # Update UI to show connected (SDD006)
             self.connection_state = "connected"
-            self.status_label.config(text="Status: Connected")
+            self.update_status_label()
             self.update_status()
             self.disconnect_btn.config(state='normal')
-            self.send_btn.config(state='normal')
+            self.send_btn.config(state='disabled')
             
             # Initialize cellular network connection in separate thread (SDD013, SDD016)
             # This runs the device configuration sequence: SDD007 -> SDD013 -> (SDD014 + SDD015 + SDD018)
@@ -498,6 +524,7 @@ class RemoteClientApplication:
             # Return to disconnected state on failure (SDD006)
             self.connection_state = "disconnected"
             self.update_status()
+            self.update_status_label()
             self.connect_btn.config(state='normal')
             messagebox.showerror("Connection Error", msg)
 
@@ -641,6 +668,7 @@ class RemoteClientApplication:
         # Initialize URC flag
         self.urc_monitoring_active = True
         self.log_message("sys", "URC monitoring active - listening for +CEREG and other URCs (SDD013)")
+        self.update_status_label()
     
     def handle_urc(self, message):
         """Handle unsolicited result codes from modem (SDD013, SDD015, SDD018, SDD044, SDD045).
@@ -715,6 +743,7 @@ class RemoteClientApplication:
                 else:
                     self.log_message("sys", f"[URC] Unrecognized stat value: {stat}")
                     self.network_registered = False
+                self.update_status_label()
             except (ValueError, IndexError):
                 pass
         elif message.startswith("+CSCON"):
@@ -812,8 +841,12 @@ class RemoteClientApplication:
         
         if success:
             self.log_message("sys", "[SUCCESS] PDP context configured (SDD014)")
+            self.pdp_ready = True
+            self.send_btn.config(state='normal')
         else:
             self.log_message("sys", "[ERROR] PDP context configuration failed (SDD014)")
+            self.pdp_ready = False
+            self.send_btn.config(state='disabled')
         
         return success
     
@@ -987,8 +1020,9 @@ class RemoteClientApplication:
         self.urc_monitoring_active = False
         self.network_registered = False
         self.udp_bound = False
+        self.pdp_ready = False
         self.location_sent = False
-        self.status_label.config(text="Status: Disconnected")
+        self.update_status_label()
         self.update_status()
         self.connect_btn.config(state='normal')
         self.disconnect_btn.config(state='disabled')
@@ -1003,6 +1037,13 @@ class RemoteClientApplication:
         """
         if not self.is_connected:
             messagebox.showwarning("Not Connected", "Connect first")
+            return
+
+        if not self.pdp_ready:
+            messagebox.showwarning(
+                "PDP Not Ready",
+                "PDP context is not configured yet. Please wait for network setup to complete (SDD036).",
+            )
             return
         
         msg = self.command_input.get("1.0", "end").strip()
