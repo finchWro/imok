@@ -13,6 +13,7 @@ reviewed: null
 text: |
   The Remote Client Application shall implement the message receiving functionality as follows:
 
+  
   - Upon receiving a message from the Communicator Application, the Remote Client Application shall display the message in the GUI's chat message area.
   - Each received message shall be timestamped with the time of receipt.
   - Chat must not display AT command responses or unsolicited result codes (URCs) from the modem.

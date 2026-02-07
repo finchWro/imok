@@ -24,6 +24,7 @@ text: |
 
   Define abstract base class `BaseDeviceProfile` with the following methods:
 
+  
   - `initialize_network(serial_manager) -> bool` - Complete network initialization sequence including RAT selection, band configuration, and PDP context
   - `send_to_harvest(serial_manager, data: str) -> bool` - Send data to Soracom Harvest Data (handles encoding and multi-step operations)
   - `receive_udp(serial_manager, buffer_size: int) -> Optional[tuple]` - Receive UDP downlink data, returns (ip_addr, port, payload) or None
@@ -37,6 +38,8 @@ text: |
   Implement `NordicThingy91XProfile(BaseDeviceProfile)`:
 
   **Key Characteristics:**
+
+  
   - Single-command operations: `AT#XSENDTO`, `AT#XRECVFROM`, `AT#XBIND`
   - ASCII data encoding
   - Standard AT command set: `AT+CFUN`, `AT+CEREG`, `AT%XSYSTEMMODE`, `AT+CGDCONT`
@@ -44,6 +47,8 @@ text: |
   - Response format: `#XRECVFROM: <size>,<ip_addr>,<port>` followed by `<data>`
 
   **Network Initialization Sequence:**
+
+  
   1. `AT+CFUN=0` - Disable modem
   2. `AT+CEREG=5` - Enable network registration URCs
   3. `AT+CSCON=1` - Enable connection status notifications
@@ -59,6 +64,8 @@ text: |
   Implement `MurataType1SCProfile(BaseDeviceProfile)`:
 
   **Key Characteristics:**
+
+  
   - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND
   - HEX data encoding (ASCII to HEX conversion required)
   - Murata-specific AT commands: `AT%RATIMGSEL`, `AT%RATACT`, `AT%SOCKETCMD`, `AT%SOCKETDATA`
@@ -66,6 +73,8 @@ text: |
   - Different PDP context syntax: `AT%PDNSET=1,"soracom.io","IP"`
 
   **Network Initialization Sequence:**
+
+  
   1. `ATZ` - Reset modem, wait for `%BOOTEV:0`
   2. `AT+CSIM=52,"80C2000015D613190103820282811B0100130799F05000010001"` - Switch to LTE-M SIM plan
   3. `AT%RATIMGSEL=1` - Select LTE-M RAT image
@@ -79,6 +88,8 @@ text: |
   11. Wait for `CEREG: 5` (registered)
 
   **Send to Harvest (6-step process):**
+
+  
   1. Convert ASCII data to HEX: `data.encode().hex().upper()`
   2. `AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514,0` - Allocate UDP socket
   3. `AT%SOCKETCMD="ACTIVATE",1` - Activate socket
@@ -151,17 +162,16 @@ text: |
 
   Modify `RemoteClientApplication` class:
 
+  
   1. Add device selector dropdown in GUI (Nordic Thingy:91 X / Murata Type 1SC-NTN)
   2. Load device configuration on startup or device selection
   3. Instantiate device profile via factory: `self.device_profile = DeviceProfileFactory.create(device_type, config)`
-  4. Replace direct AT command calls with device profile methods:
-  - `self.initialize_cellular_network()` → `self.device_profile.initialize_network(self.serial)`
-  - `self.send_to_harvest_data(data)` → `self.device_profile.send_to_harvest(self.serial, data)`
-  - `self.receive_udp_message()` → `self.device_profile.receive_udp(self.serial, self.udp_buffer_size)`
+  4. Replace direct AT command calls with device profile methods: `self.initialize_cellular_network()` → `self.device_profile.initialize_network(self.serial)`, `self.send_to_harvest_data(data)` → `self.device_profile.send_to_harvest(self.serial, data)`, `self.receive_udp_message()` → `self.device_profile.receive_udp(self.serial, self.udp_buffer_size)`
   5. Preserve existing GUI, threading, and SerialManager infrastructure
 
   ## Benefits
 
+  
   - **No Code Duplication**: Shared SerialManager, GUI layout, threading model, and application logic
   - **Easy Extension**: Add new IoT devices (including future NTN satellite devices) by implementing new profile classes
   - **Maintainable**: Device-specific logic isolated in dedicated profile modules
@@ -171,6 +181,7 @@ text: |
 
   ## Implementation Notes
 
+  
   - SerialManager class remains unchanged (handles low-level serial I/O, command/URC separation)
   - Device profiles handle high-level operations (multi-step sequences, encoding, parsing)
   - GUI displays device selection dropdown and loads appropriate configuration

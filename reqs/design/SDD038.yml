@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Open UDP socket connection to Soracom Harvest Data with Murata Type 1SC-NTN device Design
-level: 11.6.2
+level: 11.5.2
 links: []
 normative: true
 ref: ''
@@ -13,6 +13,7 @@ reviewed: null
 text: |
   The Remote Client Application shall implement the functionality to open a UDP socket connection to Soracom Harvest Data as follows:
 
+  
   - Enable socket events with command AT%SOCKETEV=0,1
   - Create UDP socket with command AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514
   - Activate the socket with command AT%SOCKETCMD="ACTIVATE",1

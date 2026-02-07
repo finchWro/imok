@@ -5,11 +5,10 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Display Location of Remote Client Application
-level: 12.6
+level: 12.5
 links: []
 normative: true
 ref: ''
 reviewed: null
 text: |
   The Communicator Application shall display the geographical location of the Remote Client Application on a map interface after reception of location data in a message from the Remote Client Application. Message format defined in SDD047.
-  

@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   UDP buffer size
-level: 8.0
+level: 8
 links: []
 normative: true
 ref: ''

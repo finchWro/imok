@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Signal Quality Monitoring Implementation for Murata Type 1SC NTN module
-level: 11.5.2
+level: 11.4.4
 links: []
 normative: true
 ref: ''

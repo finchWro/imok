@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   Send message to Soracom Harvest Data with Thingy:91 X device Design
-level: 11.7.1
+level: 11.6.1
 links: []
 normative: true
 ref: ''
@@ -13,6 +13,7 @@ reviewed: null
 text: |
   The Remote Client Application shall implement the functionality to send messages to Soracom Harvest Data as follows:
 
+  
   - After message is received from GUI message input, The application shall send AT command to IoT device via serial port: AT#XSENDTO=<url>,<port>[,<data>] where url is the Soracom Harvest Data endpoint, port is the UDP port number, and data is the message payload.
   - The application shall parse the response from the IoT device to confirm that the message has been successfully sent.
   - If the message is sent successfully, the application shall log the success status.
@@ -20,6 +21,7 @@ text: |
 
 
   Note:
+  
   - Soracom Harvest Data endpoint: harvest.soracom.io
   - UDP Port: 8514
   - Response syntax: #XSENDTO: <size> (<size> value is an integer. It represents the actual number of bytes that has been sent.)

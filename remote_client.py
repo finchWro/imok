@@ -373,8 +373,8 @@ class RemoteClientApplication:
         self.chat_display.tag_configure('recv', foreground='green')
         self.chat_display.tag_configure('sys', foreground='red')
         
-        # Input area for sending commands
-        ttk.Label(frame, text="Command Input:", font=("Arial", 9)).grid(row=1, column=0, sticky='w', pady=(10, 5))
+        # Input area for sending messages
+        ttk.Label(frame, text="Message:", font=("Arial", 9)).grid(row=1, column=0, sticky='w', pady=(10, 5))
         
         input_frame = ttk.Frame(frame)
         input_frame.grid(row=2, column=0, sticky='ew', pady=5)
@@ -383,7 +383,7 @@ class RemoteClientApplication:
         self.command_input = tk.Text(input_frame, height=3, width=80)
         self.command_input.grid(row=0, column=0, sticky='ew', padx=(0, 5))
         
-        self.send_btn = ttk.Button(input_frame, text="Send Command", command=self.send_message)
+        self.send_btn = ttk.Button(input_frame, text="Send", command=self.send_message)
         self.send_btn.grid(row=0, column=1, sticky='n')
     
     def build_send_panel(self, parent):

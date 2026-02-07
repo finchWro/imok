@@ -13,6 +13,7 @@ reviewed: null
 text: |
   The Remote Client Application shall establish and maintain a connection with the NTN cellular network to facilitate communication with the Communicator Application. This includes:
   Configure the cellular modem with necessary settings to connect to the NTN network. This includes:
+  
   - Check SIM state AT+CPIN? command to ensure SIM is ready.
   - Set the error reporting to verbose with command AT%SETACFG="manager.urcBootEv.enabled","true"
   - Set SIM initialization selection policy with command AT%SETCFG="SIM_INIT_SELECT_POLICY","0"
@@ -24,6 +25,7 @@ text: |
     AT%SETACFG="locsrv.operation.locsrv_enable","true"
     AT%SETACFG="locsrv.internal_gnss.auto_restart","enable"
     AT%SETACFG="modem_apps.Mode.AutoConnectMode","true"
+  
   - Reset the modem again using ATZ command and wait for the "%BOOTEV:0" response.
   - Switch to NTN plan with command AT+CSIM=52,"80C2000015D613190103820282811B0100130799F08900010001"
   - RAT image selection with AT%RATIMGSEL=2 command.
@@ -33,15 +35,19 @@ text: |
   - Enable GNSS and NTN reception notification:
     AT%IGNSSEV="FIX",1
     AT%NOTIFYEV="SIB31",1
+  
   - Disable iGNSS
     AT%IGNSSACT=0
+  
   - Enable iGNSS
     AT%IGNSSACT=1
+  
   - Wait for GNSS fix notification.it is crucial to wait until a valid GPS location is acquired before continuing operations. This ensures that the device is properly connected to the satellite network and can function accurately within its coverage.
 
     example response
 
     %IGNSSEVU:"FIX",1,"09:25:24","11/09/2024","altitude","latitude","113.6",1726046724000,4.6,"0.000000","B",7
+  
   - "[Latitude]","[Longitude]" from %IGNSSEVU:"FIX" notification shall be saved for location reporting and display on GUI (REQ012).
   - AT+CEREG=2 - Enable network registration URCs with location info
   - Enable radio with AT+CFUN=1 command.
@@ -65,4 +71,3 @@ text: |
 
     %IGNSSACT format:
     %IGNSSEVU:"Event Type",[Fix Status],"[Time]","[Date]","[Latitude]","[Longitude]","[Altitude]",[Unix Timestamp],[Accuracy/HDOP],"[Speed]","[GNSS System]",[Satellite Count]
-

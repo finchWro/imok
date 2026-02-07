@@ -5,7 +5,7 @@ doc:
   title: Software Design Document for _IMOK_
 header: |
   The SORACOM API specifcations
-level: 9
+level: 9.0
 links: []
 normative: true
 ref: ''

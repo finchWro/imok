@@ -21,6 +21,7 @@ text: |
   | REQ011 - Message Log |
 
   Note:
+  
   - Chat area must not display log messages (REQ011).
   - Outline map of the world shall be created using GeoPandas library with Natural Earth dataset.
   - Remote client locations shall be displayed with full 6-decimal precision (e.g., 51.143203, 17.153213).

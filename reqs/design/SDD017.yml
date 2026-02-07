@@ -12,6 +12,7 @@ ref: ''
 reviewed: null
 text: |
   The Remote Client Application shall follow ITU-T Recommendation V.250 for the implementation and usage of AT commands to communicate with the cellular modem. This includes:
+  
   - The Receive Client Application shall AT command and wait for appropriate responses from the modem to ensure successful execution of commands.
   - The application shall implement error handling mechanisms to manage unexpected responses or failures in command execution.
   - The application shall log AT command interactions for debugging and diagnostic purposes.
