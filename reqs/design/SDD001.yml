@@ -18,3 +18,6 @@ text: |
   | --- |
   | Chat Area ( Send REQ005 and received messages REQ006 ) |
   | REQ007 - Message Log |
+
+  Note:
+  - [remote app gui.png](assets/images/remote%20app%20gui.png) provides a visual representation of the Remote Client Application's GUI layout, illustrating the arrangement of the connection status indicator, chat area, and message log as specified in the requirements.

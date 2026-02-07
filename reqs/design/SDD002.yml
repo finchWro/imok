@@ -25,3 +25,4 @@ text: |
   - Chat area must not display log messages (REQ011).
   - Outline map of the world shall be created using GeoPandas library with Natural Earth dataset.
   - Remote client locations shall be displayed with full 6-decimal precision (e.g., 51.143203, 17.153213).
+  - [communicator app gui.png](assets/images/communicator%20app%20gui.png) provides a visual representation of the Communicator Application's GUI layout, illustrating the arrangement of the connection status indicator, world map, chat area, and message log as specified in the requirements.
