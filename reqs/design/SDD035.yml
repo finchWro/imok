@@ -9,10 +9,10 @@ level: 11.4.1
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: 81snTpHQrMrpcbIF2p7yo6sC0Uesa5jrYkQdvmJmOnM=
 text: |
   |
   The Remote Client Application shall configure PDP context for data communication with the cellular network as follows:
 
-  
+
   - The application shall send the AT command AT+CGDCONT=1,"IP","soracom.io" to the modem to configure the PDP context (e.g., SORACOM APN settings).

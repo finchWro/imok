@@ -5,11 +5,11 @@ doc:
   title: Requirements for _IMOK_
 header: |
   Remote Client Application — Receive Messages
-level: 1.1
+level: 2.4
 links:
-- SDD027: null
+- SDD027: svTRijBBkZbDr6TvXcyKfBaE3KOQbTQtw1HdC5ocPGw=
 normative: true
 ref: ''
-reviewed: null
+reviewed: ccFLi7shfpbTuQy0Iqefwg7haFN4_aZpMexmsvDm-8g=
 text: |
   The Remote Client Application shall receive messages from the Communicator Application and present them to the user within the GUI.

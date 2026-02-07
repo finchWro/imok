@@ -7,10 +7,10 @@ header: |
   Device Profile Pattern Architecture
 level: 1.5
 links:
-- SDD005: null
+- SDD005: 9Pp6X8pDwk3fKVjO8HajH7i5tSZsAGCGIWcOGK-qip4=
 normative: true
 ref: ''
-reviewed: null
+reviewed: gNtl6Bt-RAM9-5F-sBSone9z5Uk5LM6fY0_ihye5HrU=
 text: |
   Remote Client Application shall implement a Device Profile Pattern to support multiple IoT device types with different AT command sets and operational workflows.
 
@@ -24,7 +24,7 @@ text: |
 
   Define abstract base class `BaseDeviceProfile` with the following methods:
 
-  
+
   - `initialize_network(serial_manager) -> bool` - Complete network initialization sequence including RAT selection, band configuration, and PDP context
   - `send_to_harvest(serial_manager, data: str) -> bool` - Send data to Soracom Harvest Data (handles encoding and multi-step operations)
   - `receive_udp(serial_manager, buffer_size: int) -> Optional[tuple]` - Receive UDP downlink data, returns (ip_addr, port, payload) or None
@@ -39,7 +39,7 @@ text: |
 
   **Key Characteristics:**
 
-  
+
   - Single-command operations: `AT#XSENDTO`, `AT#XRECVFROM`, `AT#XBIND`
   - ASCII data encoding
   - Standard AT command set: `AT+CFUN`, `AT+CEREG`, `AT%XSYSTEMMODE`, `AT+CGDCONT`
@@ -48,7 +48,7 @@ text: |
 
   **Network Initialization Sequence:**
 
-  
+
   1. `AT+CFUN=0` - Disable modem
   2. `AT+CEREG=5` - Enable network registration URCs
   3. `AT+CSCON=1` - Enable connection status notifications
@@ -65,7 +65,7 @@ text: |
 
   **Key Characteristics:**
 
-  
+
   - Multi-step socket operations: ALLOCATE → ACTIVATE → SEND
   - HEX data encoding (ASCII to HEX conversion required)
   - Murata-specific AT commands: `AT%RATIMGSEL`, `AT%RATACT`, `AT%SOCKETCMD`, `AT%SOCKETDATA`
@@ -74,7 +74,7 @@ text: |
 
   **Network Initialization Sequence:**
 
-  
+
   1. `ATZ` - Reset modem, wait for `%BOOTEV:0`
   2. `AT+CSIM=52,"80C2000015D613190103820282811B0100130799F05000010001"` - Switch to LTE-M SIM plan
   3. `AT%RATIMGSEL=1` - Select LTE-M RAT image
@@ -89,7 +89,7 @@ text: |
 
   **Send to Harvest (6-step process):**
 
-  
+
   1. Convert ASCII data to HEX: `data.encode().hex().upper()`
   2. `AT%SOCKETCMD="ALLOCATE",1,"UDP","OPEN","harvest.soracom.io",8514,0` - Allocate UDP socket
   3. `AT%SOCKETCMD="ACTIVATE",1` - Activate socket
@@ -162,7 +162,7 @@ text: |
 
   Modify `RemoteClientApplication` class:
 
-  
+
   1. Add device selector dropdown in GUI (Nordic Thingy:91 X / Murata Type 1SC-NTN)
   2. Load device configuration on startup or device selection
   3. Instantiate device profile via factory: `self.device_profile = DeviceProfileFactory.create(device_type, config)`
@@ -171,7 +171,7 @@ text: |
 
   ## Benefits
 
-  
+
   - **No Code Duplication**: Shared SerialManager, GUI layout, threading model, and application logic
   - **Easy Extension**: Add new IoT devices (including future NTN satellite devices) by implementing new profile classes
   - **Maintainable**: Device-specific logic isolated in dedicated profile modules
@@ -181,7 +181,7 @@ text: |
 
   ## Implementation Notes
 
-  
+
   - SerialManager class remains unchanged (handles low-level serial I/O, command/URC separation)
   - Device profiles handle high-level operations (multi-step sequences, encoding, parsing)
   - GUI displays device selection dropdown and loads appropriate configuration

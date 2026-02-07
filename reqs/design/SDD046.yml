@@ -9,6 +9,6 @@ level: 12.5
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: TVj5ZErzpUyh9edt2rRm_PyflniVdUNZB9Zk0CvH7ms=
 text: |
   The Communicator Application shall display the geographical location of the Remote Client Application on a map interface after reception of location data in a message from the Remote Client Application. Message format defined in SDD047.

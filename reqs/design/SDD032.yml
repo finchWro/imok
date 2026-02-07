@@ -9,6 +9,6 @@ level: 11.2.2
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: cycFuxe3qBZnOdTQSl_85ZJA39af4Jwv8LgFIl7KhZ0=
 text: |
   The Remote Client Application shall implement function to establish a connection to the IoT device via a serial interface. Initial connection parameters such as baud rate, parity, and stop bits shall be configurable through the application settings.To ensure reliable communication, the Remote Client Application shall send an ATZ command to the IoT device upon establishing the connection and wait for an "%BOOTEV:0" response before proceeding with further operations and set the connection status accordingly.

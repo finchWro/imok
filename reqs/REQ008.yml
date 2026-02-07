@@ -7,9 +7,9 @@ header: |
   Communicator Application — Connection Status
 level: 3.1
 links:
-- SDD024: null
+- SDD024: 9VQepav2EvUTFvo3fffhMBMjZDRwVtDf43CvwylqtVY=
 normative: true
 ref: ''
-reviewed: null
+reviewed: lrXnK0txlUHqOWL2VH1pKxlz-nazbC6DXyOdZ_5D9ew=
 text: |
   The Communicator Application shall provide a graphical indicator that clearly shows the connection status to the Remote Client Application.

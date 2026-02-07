@@ -7,9 +7,9 @@ header: |
   Communicator Application programming language
 level: 4
 links:
-- REQ003: null
+- REQ003: 1fmrL03ISazrIEDqEr8n2OFcu_ylHCtYrLs1hTO5d00=
 normative: true
 ref: ''
-reviewed: null
+reviewed: yKBpvWFLM_5Wd0ZEVSarGS0BrXcjNZm3fiAWUCXtFoI=
 text: |
   Communicator Application shall be written in Python using the Tkinter library for the GUI. It will run on Windows and Linux operating systems.

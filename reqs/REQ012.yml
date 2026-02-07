@@ -7,13 +7,13 @@ header: |
   Communicator Application — Remote Client Location
 level: 3.5
 links:
-- SDD002: null
-- SDD034: null
-- SDD040: null
-- SDD047: null
+- SDD002: a1ZrA1Ify8-OnQHrS17nQvTVgSaPxxMA-j668DdPUGg=
+- SDD034: 9tzuwXOFM8qJ5qrXqVkG-PHQhKWQrps2tykx-cKd0ZA=
+- SDD040: 6okJrjzIrNgJOIrcoO9lU4BWA26PF0x8r2wxUok6rtc=
+- SDD047: -jueSrRXQ4257NfF5THVgUhtdioNXf_YZLp6VHiBQOU=
 normative: true
 ref: ''
-reviewed: null
+reviewed: 9HU9ChkmAiHBk0d0iIN7VnEPG9fRYH8IusR4uZSFNwM=
 text: |
   Supported devices:
   - Murata Type 1SC NTN module

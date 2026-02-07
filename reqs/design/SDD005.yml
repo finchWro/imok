@@ -7,12 +7,12 @@ header: |
   Supported IoT Device
 level: 5
 links:
-- REQ003: null
+- REQ003: 1fmrL03ISazrIEDqEr8n2OFcu_ylHCtYrLs1hTO5d00=
 normative: true
 ref: ''
-reviewed: null
+reviewed: gh6TbFa8s6U30jLJe1H14ijepLzpQmQuwPwk2FrkQIk=
 text: |
   Remote Client Application shall support following IoT devices
-  
+
   - Thingy:91 X from Nordic Semiconductor with AT shell firmware.
   - Murata Type 1SC-NTN with AT shell firmware.

@@ -4,13 +4,13 @@ header: |
   Communicator Application GUI Layout
 level: 2
 links:
-- REQ008: null
-- REQ009: null
-- REQ010: null
-- REQ011: null
+- REQ008: J3vD_2DnQAYiBkjAcn84hOe7hMRddnpnG7bWV-J1Kw4=
+- REQ009: fpmzinouCHxyqYMsfE9_GW-VxqJW49ZkcJR4NGsjzNI=
+- REQ010: CvFj10VbmK5H2gWLEMuESoALxrwXuTjrwfB0WbDFcjY=
+- REQ011: KhyfV43sHJ6b7Sjk3c44SlMgR84zwj_Ul20KKiCXKY8=
 normative: true
 ref: ''
-reviewed: null
+reviewed: fQOO1FuXfvEQGl_lPSckY_ZrSMFJQTPuhyJaevDmahI=
 text: |
   ## Communicator Application GUI Layout
 
@@ -21,7 +21,7 @@ text: |
   | REQ011 - Message Log |
 
   Note:
-  
+
   - Chat area must not display log messages (REQ011).
   - Outline map of the world shall be created using GeoPandas library with Natural Earth dataset.
   - Remote client locations shall be displayed with full 6-decimal precision (e.g., 51.143203, 17.153213).

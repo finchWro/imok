@@ -9,6 +9,6 @@ level: 7
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: 5PeINcf7-TSnrX64gPI8ZeLqcODqsRKi_bsDNiLqFGM=
 text: |
   UDP port 55555 shall be used for all UDP communications between the Communicator Application and the Remote Client Application.

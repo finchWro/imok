@@ -9,14 +9,14 @@ level: 12.4
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: sexgLATXgUw9ddim9KeaR3RS6boA0UyizPyYI087vIw=
 text: |
   Precondition:
-  
+
   - selected SIM is connected (online)
 
   The Communicator Application shall implement the following steps to send data to the Remote Client Application:
-  
+
   1) The user inputs the data to be sent in the Communicator Application GUI.
   2) Upon user confirmation (e.g., clicking a "Send" button), the Communicator Application shall send the data to the Remote Client Application via sendDownlinkUdp method of the Soracom API using the selected SIM (simId from inventory).
   3) The Communicator Application shall use UDP port defined in SDD026 UDP Transmission for sending data.

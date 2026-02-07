@@ -4,13 +4,13 @@ header: |
   Remote Client Application GUI Layout
 level: 1.0
 links:
-- REQ004: null
-- REQ005: null
-- REQ006: null
-- REQ007: null
+- REQ004: lhsFBkI-TMvMMFEZz6KtXorrowpn5_jkhUin5k2e_X8=
+- REQ005: OS9ThXRShSK3MVRJgZJEUeyRjXvyJBQK9rBzMgwEi84=
+- REQ006: PGZU6oq79wjrveIrRriICZVkrS-8Q3miyykC_ISZ400=
+- REQ007: YjpRHv7usNAX80QEorAWCV8CpDZcLnhdPh-ifGifDpM=
 normative: true
 ref: ''
-reviewed: null
+reviewed: 9NrtTnPwLGnWYuM5FUCHC5qTj87Kn6lX2gh6F_sZqYk=
 text: |
   ## Remote Client Application GUI Layout
 

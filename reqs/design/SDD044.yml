@@ -9,7 +9,7 @@ level: 11.4.3
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: 0ejarZ65VHLjrIdtcIWw9L1wR96lWjFetG6yPGsbKIk=
 text: |
   The Remote Client Application shall monitor RSRP (Reference Signal Received Power) using AT%CESQ=1 command to subscribe to notifications of changes in signal quality.
 

@@ -9,20 +9,20 @@ level: 10.1
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: 9VQepav2EvUTFvo3fffhMBMjZDRwVtDf43CvwylqtVY=
 text: |
   The Communicator Application GUI shall provide a clear indication of the SIM online status to the user:
-  
+
   1) After SIM selection the GUI shall display the current session status (text online/offline) of the selected SIM.
 
   Colour Indicators:
-  
+
   - Green: online
   - Red: offline
   - Grey: unknown (e.g., no SIM selected or unable to retrieve status)
 
   Text Indicators:
-  
+
   - "SIM Status: Online" when the SIM is connected.
   - "SIM Status: Offline" when the SIM is not connected.
   - "SIM Status: Unknown" when the status cannot be determined.

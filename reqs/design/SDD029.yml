@@ -9,26 +9,26 @@ level: 12.3
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: uQJ7YcxLymiNqJyx8vPfR-_r69F_HyQV8ErdYEWwQXo=
 text: |
   Preconditions:
-  
+
   1)  SIM is connected (online)
 
   - The Communicator Application shall read messages send by the Remote Client Application via SORACOM Harvest Data API and display them in the chat area with timestamp and status (received).
   -The Communicator Application shall poll SORACOM Harvest Data API every 5 seconds to check for new messages.
-  
+
   - The Communicator Application shall retrieve only messages that have not been previously retrieved to avoid duplicate displays.(e.g., by tracking the last retrieve timestamp (DataEntry->time)).
   - The Communicator Application shall decode the received message from Base64 format before displaying it to the user.
   -The Communicator Application shall display timestamp reviewed from SORACOM Harvest Data API (DataEntry->time) alongside the received message in the chat area.
 
 
   Note:
-  
+
   - Received messages is in content field of the response from SORACOM Harvest Data API.
   - content field format:
   {"payload":"<message encoded in Base64>"}
-  
+
   - Example:
   {"payload":"dGVzdHl5eXl5"}
   in this case received message is "testyyyy"

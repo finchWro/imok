@@ -1,0 +1,29 @@
+active: true
+derived: false
+header: |
+  HLT002 - Connection Status Indicator
+level: 1.1
+links:
+- REQ004: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  Objective:
+  Verify REQ004 by observing the connection status indication for the IoT device in the Remote Client Application GUI.
+
+  Preconditions:
+  - Remote Client Application is installed and can access a target IoT device.
+  - A serial port for the IoT device is available.
+
+  Test Steps:
+  1. Launch the Remote Client Application.
+  2. Select the IoT device COM port and baud rate.
+  3. Click Connect and observe the status indicator while connecting.
+  4. Wait until the connection completes or fails.
+  5. Click Disconnect and observe the status indicator.
+
+  Expected Results:
+  - While connecting, the status indicator shows a connecting state.
+  - On successful connection, the status indicator shows connected.
+  - On disconnect, the status indicator shows disconnected.

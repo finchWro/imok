@@ -9,19 +9,19 @@ level: 11.6.2
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: 6okJrjzIrNgJOIrcoO9lU4BWA26PF0x8r2wxUok6rtc=
 text: |
   The Remote Client Application shall implement the functionality to send messages to Soracom Harvest Data as follows:
 
-  
+
   - After message is received from GUI message input, The application shall send AT command to IoT device via serial port: AT%SOCKETDATA="SEND",1,<size>,"<data>" where size is the length in Bytes of the data which needs to be written to the socket, and data is the message payload in HEX format , which will be written to the specified socket.
   - If the message is sent successfully, the application shall log the success status.
   - Message is displayed inch GUI chat area with timestamp and indication of sending status (success/failure).
 
   Exception:
-  
+
   - Before first message is sent after connection to IoT device, Remote Client Application shall send location message to Soracom Harvest Data in format defined in SDD047.
 
   Note:
-  
+
   - Example command: AT%SOCKETDATA="SEND",1,13,"48656C6C6F2C20776F726C6421"

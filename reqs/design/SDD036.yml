@@ -9,18 +9,18 @@ level: 11.4.2
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: CIBGEbgJe4-lnsDvq4TmDbuHeyIQt1xfsTskcz3o5gw=
 text: |
   |
   The Remote Client Application shall configure PDP context for data communication with the cellular network as follows:
 
-  
+
   - The application shall send the AT command AT+CGDCONT=1,"IP","soracom.io" to the modem to configure the PDP context (e.g., SORACOM APN settings).
   - Ping SORACOM server with command AT%PINGCMD=0,"100.127.100.127",1,50,30
   - Wait for the notification %PINGCMD indicating successful ping to the server for up to 30 seconds.
 
   Postconditions:
-  
+
   - The Remote Client Application shall confirm that the PDP context is successfully configured by verifying the %PINGCMD response from the modem.
   - Sending messages to the Communicator Application shall be enabled after successful PDP context configuration, allowing for data communication over the cellular network.
 

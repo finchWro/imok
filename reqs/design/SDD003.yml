@@ -7,9 +7,9 @@ header: |
   Remote Client Application programming language
 level: 3
 links:
-- REQ002: null
+- REQ002: PNjLBGeUYscRAbw5arz2RpKfNgT5OKSG33yv6XL2kbE=
 normative: true
 ref: ''
-reviewed: null
+reviewed: 8yo1UHz1wm5lia6mM0IBDM1CSUSOH7H0lGCb3q0im1Q=
 text: |
   Remote Client Application shall be written in Python using the Tkinter library for the GUI. It will run on Windows and Linux operating systems.

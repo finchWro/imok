@@ -9,11 +9,11 @@ level: 9.1
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: 9rLbeA_EZVgqdFAsgzNA9UESbaRB519hUMNO5W6F1go=
 text: |
   The Remote Client Application shall implement a configuration sequence for the IoT device upon startup. This sequence includes:
 
-  
+
   - Connect to IoT Device Design SDD007
   - Establish Cellular Connection Design SDD013
   - If Establish Cellular Connection SDD013 finishes successfully, then start Signal Quality Monitoring Design SDD015

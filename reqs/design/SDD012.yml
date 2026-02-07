@@ -9,10 +9,10 @@ level: 1.4
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: JtMF7B7c0-sZg_Uknd-HlbnQp6-x7td6PgEwMK5xwtk=
 text: |
   The Remote Client Application shall implement the message log functionality as follows:
-  
+
   - The message log shall record all sent messages via the serial console.
   - The message log shall record all received messages via the serial console.
   - Each log entry shall include a timestamp indicating when the message was sent or received.

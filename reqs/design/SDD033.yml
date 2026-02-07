@@ -9,11 +9,11 @@ level: 11.3.1
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: Gdd5aISzU9IzRAvRzu-sjvUi1QoWZqiMGrb430dUI1c=
 text: |
   The Remote Client Application shall establish and maintain a connection with the cellular network to facilitate communication with the Communicator Application. This includes:
 
-  
+
   - Disbable modem with AT+CFUN=0 command.
   - Subscribe to network status notifications using AT+CEREG=5 (subscribe to a level-5 notifications) command.
   - Subscribe to result code notifications using AT+CSCON=1 (subscribe to level-1-related unsolicited notifications) command.

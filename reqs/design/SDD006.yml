@@ -9,11 +9,11 @@ level: 1.1
 links: []
 normative: true
 ref: ''
-reviewed: null
+reviewed: IW_Vghzkro9M4RNrCmdLnc0EAgBldfTapjw2nuvGCGA=
 text: |
   The Remote Client Application shall implement the connection status indicator as follows:
 
-  
+
   - A green circle icon indicates that the application is connected to the IoT device.
   - A red circle icon indicates that the application is disconnected from the IoT device.
   - A yellow circle icon indicates that the application is attempting to connect to the IoT device.
