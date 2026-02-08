@@ -1,0 +1,29 @@
+active: true
+derived: false
+header: |
+	HLT007 - Communicator Receive Message Logged
+level: 1.6
+links:
+- REQ010: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+	Objective:
+	Verify REQ010 by using the Communicator Application Message Log to compare observed receive behavior with recorded receive results.
+
+	Preconditions:
+	- Communicator Application is connected and ready to receive messages.
+	- Remote Client Application is connected and able to send a message to the Communicator Application.
+
+	Test Steps:
+	1. Send a unique test message from the Remote Client Application to the Communicator Application (e.g., "HLT010-RECV-001").
+	2. Open the Communicator Application Message Log and locate the most recent received entry marked with "[RECV]" for comparison.
+
+	Expected Results:
+	- The Communicator Application Message Log contains a "[RECV]" entry with the exact test payload and a timestamp for comparison.
+	- The log entry indicates the message was received, demonstrating REQ010 is fulfilled.
+	- Pass/Fail: The test passes when the observed receive behavior matches the Message Log entry; otherwise it fails.
+
+	Actual Log (record during test execution):
+	- [YYYY-MM-DD HH:MM:SS] [RECV] <paste exact log line from the Message Log>

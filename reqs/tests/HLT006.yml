@@ -1,0 +1,30 @@
+active: true
+derived: false
+header: |
+	HLT006 - Communicator Send Message Logged
+level: 1.5
+links:
+- REQ009: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+	Objective:
+	Verify REQ009 by using the application-generated Message Log to compare observed send behavior with the recorded send results.
+
+	Preconditions:
+	- Communicator Application is connected and ready to send messages.
+	- Remote Client Application is connected and ready to receive messages.
+
+	Test Steps:
+	1. Enter a unique test message in the Communicator Application input box (e.g., "HLT009-SEND-001").
+	2. Click Send.
+	3. Open the application-generated Message Log and locate the most recent sent entry marked with "[SEND]" for comparison.
+
+	Expected Results:
+	- The application-generated Message Log contains a "[SEND]" entry with the exact test payload and a timestamp for comparison.
+	- The log entry indicates the message was sent, demonstrating REQ009 is fulfilled.
+	- Pass/Fail: The test passes when the observed send behavior matches the application-generated Message Log entry; otherwise it fails.
+
+	Actual Log (record during test execution):
+	- [YYYY-MM-DD HH:MM:SS] [SEND] <paste exact log line from the Message Log>

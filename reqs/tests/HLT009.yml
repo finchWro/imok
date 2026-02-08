@@ -1,0 +1,27 @@
+active: true
+derived: false
+header: |
+	HLT009 - Remote Client Location Display
+level: 1.8
+links:
+- REQ012: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+	Objective:
+	Verify REQ012 by observing that the Communicator Application displays the Remote Client location for supported devices.
+
+	Preconditions:
+	- Communicator Application is installed and connected.
+	- Remote Client Application is connected using a Murata Type 1SC NTN module.
+	- Remote Client location data is available (GNSS fix or manual set).
+
+	Test Steps:
+	1. Launch the Communicator Application.
+	2. Connect the Remote Client Application and ensure location data is sent.
+	3. Observe the Remote Client location display in the Communicator Application.
+
+	Expected Results:
+	- The Communicator Application displays the Remote Client location for the Murata Type 1SC NTN module.
+	- The location display updates when new location data is received.

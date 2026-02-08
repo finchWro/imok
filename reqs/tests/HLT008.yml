@@ -1,0 +1,31 @@
+active: true
+derived: false
+header: |
+  HLT008 - Communicator Message Log Entries
+level: 1.7
+links:
+- REQ011: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+  Objective:
+  Verify REQ011 by using the Communicator Application Message Log to compare observed send and receive events with recorded log entries and timestamps.
+
+  Preconditions:
+  - Communicator Application is connected and ready to send and receive messages.
+  - Remote Client Application is connected and able to send/receive messages.
+
+  Test Steps:
+  1. Send a unique test message from the Communicator Application (e.g., "HLT011-SEND-001").
+  2. Send a unique test message from the Remote Client Application to the Communicator Application (e.g., "HLT011-RECV-001").
+  3. Open the Communicator Application Message Log and locate the most recent "[SEND]" and "[RECV]" entries for comparison.
+
+  Expected Results:
+  - The Communicator Application Message Log contains a "[SEND]" entry with the exact send payload and a timestamp.
+  - The Communicator Application Message Log contains a "[RECV]" entry with the exact receive payload and a timestamp.
+  - Pass/Fail: The test passes when both observed events match the corresponding Message Log entries; otherwise it fails.
+
+  Actual Log (record during test execution):
+  - [YYYY-MM-DD HH:MM:SS] [SEND] <paste exact log line from the Message Log>
+  - [YYYY-MM-DD HH:MM:SS] [RECV] <paste exact log line from the Message Log>

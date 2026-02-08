@@ -1,0 +1,29 @@
+active: true
+derived: false
+header: |
+	HLT005 - Communicator Connection Status Indicator
+level: 1.4
+links:
+- REQ008: null
+normative: true
+ref: ''
+reviewed: null
+text: |
+	Objective:
+	Verify REQ008 by observing the connection status indicator for the Remote Client Application in the Communicator Application GUI.
+
+	Preconditions:
+	- Communicator Application is installed and configured with valid credentials.
+	- A Remote Client Application is available for connection status observation.
+
+	Test Steps:
+	1. Launch the Communicator Application.
+	2. Select the target SIM or remote client connection as required.
+	3. Observe the status indicator while the Remote Client Application is offline.
+	4. Bring the Remote Client Application online and observe the status indicator.
+	5. Disconnect the Remote Client Application and observe the status indicator.
+
+	Expected Results:
+	- When the Remote Client Application is offline, the indicator shows disconnected/offline.
+	- When the Remote Client Application is online, the indicator shows connected/online.
+	- After disconnect, the indicator returns to disconnected/offline.
